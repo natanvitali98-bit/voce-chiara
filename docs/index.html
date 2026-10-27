@@ -270,7 +270,7 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
-const APP_VERSION="v13";
+const APP_VERSION="v14";
 let AUDIO_OK=true;try{AUDIO_OK=localStorage.getItem("vc-noaudio")!=="1"}catch(e){}
 function setAudioOk(v){AUDIO_OK=v;try{v?localStorage.removeItem("vc-noaudio"):localStorage.setItem("vc-noaudio","1")}catch(e){}}
 let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
@@ -322,7 +322,11 @@ async function gemini(input,json,audio,key,tier){
   let set=(key===GKEY&&MODEL_SET&&MODEL_SET.flash)?MODEL_SET:null;
   if(!set){set=await pickModels(key);if(key===GKEY){MODEL_SET=set;try{localStorage.setItem(MODEL_STORE,JSON.stringify(set))}catch(e){}}}
   /* per ascoltare e per i ragionamenti lunghi prima "flash"; per tutto il resto prima "lite", che è più veloce */
-  const list=(audio||tier==="complex"?set.flash.concat(set.lite):set.lite.concat(set.flash)).concat(set.gemma||[]);
+  /* ascolto: prima Lite (più veloce), al massimo 2 modelli. Ragionamenti lunghi: prima Flash. Il resto: prima Lite */
+  const list=audio?set.lite.concat(set.flash).slice(0,2):(tier==="complex"?set.flash.concat(set.lite):set.lite.concat(set.flash)).concat(set.gemma||[]);
+  const kb=audio?Math.round(audio.data.length*0.75/1024):0,t0=Date.now();
+  const tick=audio?setInterval(()=>prog("Il Cervello ascolta… "+Math.round((Date.now()-t0)/1000)+"s"),1000):null;
+  try{
   let prepay=false;
   for(const model of list){
     const isGemma=/^gemma/.test(model);
@@ -330,10 +334,10 @@ async function gemini(input,json,audio,key,tier){
     if(isGemma&&audio){errs.push(model+": non sente l'audio");lastErr=errs.join(" | ");continue}
     prog(audio?"Il Cervello ascolta…":"Il Cervello ci pensa…");
     for(const mode of thinkOrder(model)){
-      const generationConfig={temperature:.7,maxOutputTokens:2048};
+      const generationConfig={temperature:.7,maxOutputTokens:audio?700:1536};
       if(json&&!isGemma)generationConfig.responseMimeType="application/json";
       if(THINK[mode])generationConfig.thinkingConfig=THINK[mode];
-      try{r=await fetchT(`${GEMINI}/${model}:generateContent`,{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":key},body:JSON.stringify({contents,generationConfig})},audio?30000:25000)}
+      try{r=await fetchT(`${GEMINI}/${model}:generateContent`,{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":key},body:JSON.stringify({contents,generationConfig})},audio?45000:25000)}
       catch(e){if(e&&e.code==="timeout"){errs.push(model+" nessuna risposta in tempo");lastErr=errs.join(" | ");break}throw e}
       if(r.status===404){errs.push(model+" 404");lastErr=errs.join(" | ");break}
       const d=await r.json().catch(()=>null);
@@ -348,6 +352,8 @@ async function gemini(input,json,audio,key,tier){
       return {json:parsed,text,model};
     }
   }
+  }finally{if(tick)clearInterval(tick)}
+  if(audio)lastErr+=" | audio "+kb+" KB, "+(audio.secs?audio.secs.toFixed(1)+" s":"")+", attesa "+Math.round((Date.now()-t0)/1000)+" s";
   throw {code:/ 402/.test(lastErr)?"prepay":/ 429/.test(lastErr)?"rate_limited":"ai_error",detail:lastErr};
 }
 function makeSample(){
