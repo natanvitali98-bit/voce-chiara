@@ -1,9 +1,8 @@
 # Voce Chiara
 
-App personale (sito installabile su iPhone) per allenarsi a parlare italiano a voce e per la memoria.
+App personale, installabile sull'iPhone, per allenarsi a parlare italiano a voce e per la memoria.
+Pubblicata con GitHub Pages dalla cartella `docs/`.
 
-- `public/` – l'app (una pagina, installabile dalla schermata Home)
-- `netlify/functions/ai.mts` – il Cervello: chiama Gemini con la chiave in `MY_GEMINI_KEY`
-- `netlify/functions/state.mts` – salva i progressi (Netlify Blobs)
-
-Variabili d'ambiente su Netlify: `APP_CODE` (codice personale), `MY_GEMINI_KEY` (chiave gratuita di Google AI Studio).
+- Il "Cervello" usa Google Gemini direttamente dal telefono.
+- La chiave Gemini NON è in questo codice: si inserisce nell'app e resta salvata solo sul telefono.
+- I progressi restano sul telefono (con backup manuale da Cervello > Impostazioni).

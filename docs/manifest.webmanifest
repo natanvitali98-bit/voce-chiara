@@ -1,0 +1,16 @@
+{
+  "name": "Voce Chiara",
+  "short_name": "Voce Chiara",
+  "description": "Allenamento quotidiano per parlare italiano a voce e per la memoria.",
+  "lang": "it",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#edf1ef",
+  "theme_color": "#2c6b5a",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

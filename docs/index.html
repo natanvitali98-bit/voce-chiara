@@ -8,9 +8,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Voce Chiara">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="icon" href="/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
 <title>Voce Chiara</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap">
@@ -263,45 +263,93 @@ function streak(){let n=0,miss=0,d=new Date();if(!S.days[iso(d)])d.setDate(d.get
   for(let i=0;i<400;i++){if(S.days[iso(d)]){n++;miss=0}else{miss++;if(miss>=2)break}d.setDate(d.getDate()-1)}return n}
 function toast(t){const el=document.getElementById("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600)}
 
-/* ================= SERVER: AI (Gemini) + SALVATAGGIO ================= */
-let CODE="";try{CODE=localStorage.getItem("vc-code")||""}catch(e){}
-let sample=null,sampleChecked=false,aiReady=false,syncT=null;
-async function api(path,opts={}){
-  const r=await fetch(path,Object.assign({},opts,{headers:{"content-type":"application/json","x-code":CODE}}));
-  let d={};try{d=await r.json()}catch(e){}
-  if(!r.ok)throw {code:d.code||("http_"+r.status),message:d.message||""};
-  return d;
+/* ================= CERVELLO: Gemini direttamente dal telefono ================= */
+/* La chiave Gemini resta solo su questo telefono (localStorage). Non è nel codice. */
+const KEYSTORE="vc-gemini-key";
+let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
+let sample=null,sampleChecked=false;
+const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
+const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
+async function gemini(input,json,audio,key){
+  key=key||GKEY;if(!key)throw {code:"no_key"};
+  let contents;
+  if(Array.isArray(input))contents=input.slice(-24).map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:String(m.content||"").slice(0,8000)}]}));
+  else contents=[{role:"user",parts:[{text:String(input||"").slice(0,20000)}]}];
+  if(audio)contents[contents.length-1].parts.unshift({inline_data:{mime_type:audio.mime||"audio/wav",data:audio.data}});
+  const base={temperature:.7,maxOutputTokens:2048};if(json)base.responseMimeType="application/json";
+  let r;
+  for(const model of MODELS){
+    for(const fast of [true,false]){
+      const generationConfig=fast?Object.assign({},base,{thinkingConfig:{thinkingBudget:0}}):base;
+      try{r=await fetch(`${GEMINI}/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({contents,generationConfig})})}
+      catch(e){throw {code:"offline"}}
+      if(r.status===404)break;
+      const d=await r.json().catch(()=>null);
+      if(r.status===400&&fast&&!/API key|API_KEY/i.test(JSON.stringify(d||"")))continue;
+      if(r.status===429)throw {code:"rate_limited"};
+      if(!r.ok){const t=JSON.stringify(d||"");throw {code:/API key|API_KEY|PERMISSION/i.test(t)||r.status===403?"bad_key":"ai_error"}}
+      const text=((d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[]).map(p=>p.text||"").join("").trim();
+      if(!json)return {text};
+      let parsed=null;try{parsed=JSON.parse(text)}catch(e){const m=text.match(/\{[\s\S]*\}/);if(m)try{parsed=JSON.parse(m[0])}catch(_){}}
+      return {json:parsed,text};
+    }
+  }
+  throw {code:"ai_error"};
 }
 function makeSample(){
-  const call=(input,opts,json)=>api("/api/ai",{method:"POST",body:JSON.stringify({input,json,audio:(opts&&opts.audio)||null})});
-  const f=async(input,opts={})=>{const d=await call(input,opts,false);const text=String(d.text||"");if(opts.onText)opts.onText({text,delta:text});return {text,truncated:false}};
-  f.json=async(input,opts={})=>{const d=await call(input,opts,true);if(d.json==null)throw {code:"bad_json"};return d.json};
+  const f=async(input,opts={})=>{const d=await gemini(input,false,opts.audio);const text=String(d.text||"");if(opts.onText)opts.onText({text,delta:text});return {text,truncated:false}};
+  f.json=async(input,opts={})=>{const d=await gemini(input,true,opts.audio);if(d.json==null)throw {code:"bad_json"};return d.json};
   return f;
 }
-function pushState(){clearTimeout(syncT);syncT=setTimeout(()=>{if(!CODE)return;api("/api/state",{method:"PUT",body:JSON.stringify({json:JSON.stringify(S),updatedAt:S.updatedAt})}).catch(()=>{})},1200)}
-async function boot(){
-  try{const st=await api("/api/ai");aiReady=!!st.ready}catch(e){aiReady=false}
-  sample=aiReady?makeSample():null;sampleChecked=true;
-  try{const d=await api("/api/state");
-    if(d&&d.json&&(d.updatedAt||0)>(S.updatedAt||0)){S=migrate(JSON.parse(d.json));try{localStorage.setItem(KEY,d.json)}catch(e){}}
-    else if(S.updatedAt)pushState();
-  }catch(e){if(e&&e.code==="bad_code"){try{localStorage.removeItem("vc-code")}catch(_){}CODE="";return renderLogin("Il codice non è più valido. Inseriscilo di nuovo.")}}
-  if(tab!=="play")render();
+function pushState(){}
+function boot(){sample=GKEY?makeSample():null;sampleChecked=true;if(tab!=="play")render()}
+async function saveKey(k){
+  k=String(k||"").trim();if(!k)throw {code:"no_key"};
+  await gemini("Rispondi solo: ok",false,null,k);
+  GKEY=k;try{localStorage.setItem(KEYSTORE,k)}catch(e){}
+  sample=makeSample();sampleChecked=true;
 }
-function renderLogin(err){
+function keyFormHTML(intro){
+  return `${intro||""}<div class="scaffold">
+    <div><b>1.</b> Apri <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> ed entra con Google</div>
+    <div><b>2.</b> Tocca <b>Create API key</b> e copiala</div>
+    <div><b>3.</b> Incollala qui sotto</div></div>
+    <label for="gkey">Chiave Gemini</label><input id="gkey" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="AIza…">
+    <button class="btn wide" id="gsave">Collega il Cervello</button><p id="gmsg" class="small" hidden></p>
+    <p class="small muted">La chiave resta solo su questo telefono. È gratuita: nella versione gratis Google può usare ciò che invii per migliorare i suoi servizi, quindi negli esercizi non dire cose private.</p>`;
+}
+function wireKeyForm(after){
+  const b=app.querySelector("#gsave");if(!b)return;
+  b.onclick=async()=>{const m=app.querySelector("#gmsg");b.disabled=true;m.hidden=false;m.className="small muted";m.innerHTML='<span class="spin"></span> Provo la chiave…';
+    try{await saveKey(app.querySelector("#gkey").value);toast("Cervello collegato!");after()}
+    catch(e){b.disabled=false;m.className="small no";m.textContent=noClaudeMsg(e)}};
+}
+function renderLogin(){
   document.querySelector("nav.tabs").hidden=true;
-  app.innerHTML=`<div class="login"><div class="hello"><p class="eyebrow">Voce Chiara</p><h1>Ciao! Inserisci il tuo codice</h1></div>
-  <div class="card"><label for="code">Codice personale</label><input id="code" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="es. faggio-1234">
-  <button class="btn wide" id="enter">Entra</button>${err?`<p class="no small">${esc(err)}</p>`:""}
-  <p class="small muted">Lo inserisci solo la prima volta. Serve a proteggere il tuo Cervello e i tuoi progressi.</p></div></div>`;
-  const go_=async()=>{const v=app.querySelector("#code").value.trim().toLowerCase();if(!v)return;CODE=v;
-    try{await api("/api/state");try{localStorage.setItem("vc-code",v)}catch(e){}document.querySelector("nav.tabs").hidden=false;render();boot()}
-    catch(e){CODE="";renderLogin(e&&e.code==="bad_code"?"Codice sbagliato. Controlla e riprova.":"Non riesco a collegarmi. Controlla internet e riprova.")}};
-  app.querySelector("#enter").onclick=go_;
-  app.querySelector("#code").onkeydown=e=>{if(e.key==="Enter")go_()};
+  app.innerHTML=`<div class="login"><div class="hello"><p class="eyebrow">Voce Chiara</p><h1>Collega il Cervello</h1></div>
+  <div class="card">${keyFormHTML(`<p class="muted">Il Cervello ti ascolta, ti risponde e crea esercizi per te. Serve una chiave gratuita di Google Gemini. Ci vogliono 2 minuti.</p>`)}
+  <button class="btn ghost" id="skip">Lo faccio dopo</button></div></div>`;
+  const done=()=>{try{localStorage.setItem("vc-setup","1")}catch(e){}document.querySelector("nav.tabs").hidden=false;render()};
+  wireKeyForm(done);app.querySelector("#skip").onclick=()=>{done();boot()};
+}
+function settingsHTML(){
+  return `<div class="card"><h2>Impostazioni</h2>
+  ${GKEY?`<p class="small">Cervello collegato a Gemini. <button class="x" id="gdelkey" style="padding:0 0 0 6px">Scollega</button></p>`:keyFormHTML(`<p class="small muted">Il Cervello non è collegato.</p>`)}
+  <details><summary>Backup dei progressi</summary><div class="stack" style="margin-top:10px">
+    <p class="small muted">I progressi sono salvati su questo telefono. Ogni tanto copia il backup e incollalo in una nota: se cambi telefono lo ripristini da qui.</p>
+    <button class="btn soft" id="bkcopy">Copia il backup</button>
+    <textarea id="bktext" placeholder="Incolla qui un backup per ripristinarlo"></textarea><button class="btn ghost" id="bkrest">Ripristina il backup</button></div></details></div>`;
+}
+function wireSettings(){
+  const q=s=>app.querySelector(s);
+  wireKeyForm(()=>render());
+  const d=q("#gdelkey");if(d)d.onclick=()=>{GKEY="";try{localStorage.removeItem(KEYSTORE)}catch(e){}sample=null;render()};
+  const c=q("#bkcopy");if(c)c.onclick=()=>{const t=JSON.stringify(S);const ta=q("#bktext");
+    try{navigator.clipboard.writeText(t).then(()=>toast("Backup copiato. Incollalo in una nota."),()=>{ta.value=t;ta.select();toast("Tieni premuto sul testo e scegli Copia")})}catch(e){ta.value=t;ta.select()}};
+  const r=q("#bkrest");if(r)r.onclick=()=>{try{const o=JSON.parse(q("#bktext").value);if(!o||!o.days)throw 0;S=migrate(o);save();toast("Backup ripristinato");render()}catch(e){toast("Questo testo non è un backup valido")}};
 }
 function noClaudeMsg(e){const c=e&&e.code;
-  return c==="bad_code"?"Il codice personale non è giusto.":c==="no_key"?"Il Cervello non è ancora collegato: manca la chiave Gemini.":c==="rate_limited"?"Troppe richieste di fila. Aspetta un minuto e riprova.":c==="mic"?"Non riesco a usare il microfono. Controlla il permesso: Impostazioni > Safari > Microfono.":c==="audio_too_big"?"La registrazione è troppo lunga. Prova con una più corta.":"Il Cervello non risponde. Controlla internet e riprova."}
+  return c==="no_key"?"Il Cervello non è collegato: aggiungi la chiave Gemini in Cervello > Impostazioni.":c==="bad_key"?"La chiave Gemini non funziona. Controlla di averla copiata tutta.":c==="rate_limited"?"Troppe richieste di fila. Aspetta un minuto e riprova.":c==="offline"?"Non c'è connessione. Controlla internet e riprova.":c==="mic"?"Non riesco a usare il microfono. Controlla il permesso: Impostazioni > Safari > Microfono.":"Il Cervello non risponde. Riprova tra un momento."}
 function ctx(){
   const g=prefs();
   return `Profilo: ragazzo di 18 anni con DSA. In testa parla bene in italiano, ma a voce con altre persone le parole gli si mischiano; in dialetto${S.dialetto?" ("+S.dialetto+")":""} gli viene più facile. Si annoia facilmente.
@@ -1104,7 +1152,7 @@ function rCervello(){
   const off=sampleChecked&&!sample;
   app.innerHTML=`<div class="hello"><p class="eyebrow">Il Cervello</p><h1>Il tuo allenatore</h1></div>
   <p class="muted">Il Cervello ti ascolta e ragiona con l'intelligenza artificiale. Guarda come vai, crea esercizi sui tuoi interessi e ti aiuta a trovare il metodo giusto anche per studiare.</p>
-  ${off?`<p class="note">Il Cervello non è ancora collegato (manca la chiave Gemini). Gli altri giochi funzionano lo stesso.</p>`:""}
+  ${off?`<p class="note">Il Cervello non è ancora collegato: aggiungi la chiave Gemini in Impostazioni, qui sotto. Gli altri giochi funzionano lo stesso.</p>`:""}
   ${goalCervelloHTML()}
   ${voiceCardHTML(curStep()?curStep().scena:"una conversazione tra amici su cosa ho fatto oggi")}
   <div class="card"><h2>Cosa ti piace?</h2><p class="small muted">Più è preciso, più gli esercizi saranno tuoi.</p>
@@ -1115,6 +1163,7 @@ function rCervello(){
     <div class="chat" id="chat">${S.chat.map(m=>`<div class="msg ${m.role==="user"?"me":"ai"}">${esc(m.content)}</div>`).join("")}</div>
     <textarea id="q" maxlength="800" placeholder="Scrivi qui, anche in dialetto…"></textarea>
     <div class="two"><button class="btn" id="send" ${off?"disabled":""}>Invia</button><button class="btn ghost" id="clr" ${S.chat.length?"":"disabled"}>Nuova chat</button></div></div>
+  ${settingsHTML()}
   <details><summary>Come funziona l'app (i metodi)</summary><ul>
     <li><b>Ricordare invece di rileggere.</b> Ogni gioco ti fa tirare fuori la risposta dalla testa: è il metodo di studio con più prove scientifiche.</li>
     <li><b>Ripasso distanziato.</b> Le tue frasi tornano dopo 1, 3, 7, 14 e 30 giorni, così passano nella memoria lunga.</li>
@@ -1124,7 +1173,7 @@ function rCervello(){
     <li><b>Il tuo obiettivo guida tutto.</b> Il percorso settimanale sceglie più spesso i giochi utili per quella settimana, e la scena e la missione sono legate a quello che vuoi ottenere.</li>
     <li><b>Si misura la vita vera.</b> Ogni settimana dici com'è andata parlando con le persone. Il Cervello confronta questo con come hai usato l'app e corregge la settimana dopo.</li>
     <li><b>Vita vera.</b> La missione del giorno porta l'allenamento fuori dal telefono, dove serve.</li></ul></details>`;
-  wireGoalCervello();wireVoice();
+  wireGoalCervello();wireVoice();wireSettings();
   app.querySelector("#int").onchange=e=>{S.interessi=e.target.value.trim();save()};
   app.querySelectorAll("[data-chip]").forEach(b=>b.onclick=()=>{const q=app.querySelector("#q");q.value=b.dataset.chip;q.focus()});
   app.querySelector("#clr").onclick=()=>{S.chat=[];save();render()};
@@ -1185,11 +1234,12 @@ function rProg(){
     ${p.liked.length?`<p>Fai più spesso: <b>${p.liked.map(esc).join(", ")}</b>.</p>`:""}
     ${p.bored.length?`<p>Ti annoiano: <b>${p.bored.map(esc).join(", ")}</b>. Te li propongo meno.</p>`:""}
     ${S.dict.length?`<p>Frasi nel ripasso: ${S.dict.length}. Ben fissate (ricordate 3 o più volte): ${boxes[3]+boxes[4]}.</p>`:""}</div>
-  <p class="small muted">I progressi sono salvati sul telefono e online, protetti dal tuo codice.</p>`;
+  <p class="small muted">I progressi sono salvati su questo telefono. Puoi farne un backup in Cervello > Impostazioni.</p>`;
 }
 
-if(!CODE)renderLogin();else{render();boot()}
-if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});
+let setup="";try{setup=localStorage.getItem("vc-setup")||""}catch(e){}
+if(!GKEY&&!setup)renderLogin();else{render();boot()}
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
 </html>
