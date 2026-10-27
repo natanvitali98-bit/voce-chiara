@@ -570,7 +570,7 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
-const APP_VERSION="v19";
+const APP_VERSION="v20";
 let AUDIO_OK=true;try{AUDIO_OK=localStorage.getItem("vc-noaudio")!=="1"}catch(e){}
 function setAudioOk(v){AUDIO_OK=v;try{v?localStorage.removeItem("vc-noaudio"):localStorage.setItem("vc-noaudio","1")}catch(e){}}
 let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
@@ -599,8 +599,8 @@ async function pickModels(key){
   const ver=n=>{const m=n.match(/gemini-(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0};
   const score=n=>-(/preview|exp/.test(n)?15:0)+(/latest/.test(n)?8:0)+ver(n)*3;
   const gem=names.filter(n=>/^gemini/.test(n)&&!bad.test(n));
-  const flash=gem.filter(n=>/flash/.test(n)&&!/lite/.test(n)).sort((a,b)=>score(b)-score(a)).slice(0,2);
-  const lite=gem.filter(n=>/flash-lite/.test(n)).sort((a,b)=>score(b)-score(a)).slice(0,1);
+  const flash=gem.filter(n=>/flash/.test(n)&&!/lite/.test(n)).sort((a,b)=>score(b)-score(a)).slice(0,3);
+  const lite=gem.filter(n=>/flash-lite/.test(n)).sort((a,b)=>score(b)-score(a)).slice(0,2);
   const set={flash:flash.length?flash:MODELS,lite,gemma};
   PICKED={key,set};return set;
 }
@@ -611,6 +611,14 @@ function thinkOrder(m){
   const all=/gemini-([3-9]|\d\d)|latest/.test(m)?["minimal","low","budget0","none"]:["budget0","none"];
   const known=CFG_OK[m];return known?[known].concat(all.filter(x=>x!==known)):all;
 }
+let COOL={};try{COOL=JSON.parse(localStorage.getItem("vc-cool")||"{}")||{}}catch(e){}
+const cooling=m=>(COOL[m]||0)>Date.now();
+function coolDown(m,ms){COOL[m]=Date.now()+ms;try{localStorage.setItem("vc-cool",JSON.stringify(COOL))}catch(e){}}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+/* legge dalla risposta di Google quanto aspettare e se il limite è quello del giorno */
+function quotaInfo(d){const t=JSON.stringify(d||"");let secs=0;
+  const m=t.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/);if(m)secs=Math.ceil(parseFloat(m[1]));
+  return {secs,day:/PerDay|per day|daily/i.test(t)}}
 let lastErr="";
 async function gemini(input,json,audio,key,tier){
   key=key||GKEY;if(!key)throw {code:"no_key"};
@@ -627,7 +635,10 @@ async function gemini(input,json,audio,key,tier){
   if(!set){set=await pickModels(key);if(key===GKEY){MODEL_SET=set;try{localStorage.setItem(MODEL_STORE,JSON.stringify(set))}catch(e){}}}
   /* per ascoltare e per i ragionamenti lunghi prima "flash"; per tutto il resto prima "lite", che è più veloce */
   /* ascolto: prima Lite (più veloce), al massimo 2 modelli. Ragionamenti lunghi: prima Flash. Il resto: prima Lite */
-  const list=audio?(S.precise?set.flash.concat(set.lite):set.lite.concat(set.flash)).slice(0,2):(tier==="complex"?set.flash.concat(set.lite):set.lite.concat(set.flash)).concat(set.gemma||[]);
+  let list=audio?(S.precise?set.flash.concat(set.lite):set.lite.concat(set.flash)).slice(0,3):(tier==="complex"?set.flash.concat(set.lite):set.lite.concat(set.flash)).concat(set.gemma||[]);
+  /* i modelli che Google ha appena fermato per "troppe richieste" vengono saltati finché non tornano liberi */
+  const free=list.filter(m=>!cooling(m));list=free.length?free:list;
+  let dayLimit=false;const waited={};
   const kb=audio?Math.round(audio.data.length*0.75/1024):0,t0=Date.now();
   const tick=audio?setInterval(()=>prog("Il Cervello ascolta… "+Math.round((Date.now()-t0)/1000)+"s"),1000):null;
   try{
@@ -637,16 +648,24 @@ async function gemini(input,json,audio,key,tier){
     if(prepay&&!isGemma)continue;          /* con i crediti prepagati finiti, salta gli altri Gemini e prova Gemma */
     if(isGemma&&audio){errs.push(model+": non sente l'audio");lastErr=errs.join(" | ");continue}
     prog(audio?"Il Cervello ascolta…":"Il Cervello ci pensa…");
-    for(const mode of thinkOrder(model)){
+    const modes=thinkOrder(model);
+    for(let mi=0;mi<modes.length;mi++){const mode=modes[mi];
       const generationConfig={temperature:.7,maxOutputTokens:audio?700:1536};
       if(json&&!isGemma)generationConfig.responseMimeType="application/json";
       if(THINK[mode])generationConfig.thinkingConfig=THINK[mode];
-      try{r=await fetchT(`${GEMINI}/${model}:generateContent`,{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":key},body:JSON.stringify({contents,generationConfig})},audio?45000:25000)}
+      try{r=await fetchT(`${GEMINI}/${model}:generateContent`,{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":key},body:JSON.stringify({contents,generationConfig})},audio?Math.min(80000,30000+(audio.secs||10)*1600):25000)}
       catch(e){if(e&&e.code==="timeout"){errs.push(model+" nessuna risposta in tempo");lastErr=errs.join(" | ");break}throw e}
       if(r.status===404){errs.push(model+" 404");lastErr=errs.join(" | ");break}
       const d=await r.json().catch(()=>null);
       if(r.status===400&&mode!=="none"&&!/API key|API_KEY/i.test(JSON.stringify(d||"")))continue;   /* impostazione non accettata: prova la prossima */
-      if(r.status===429){errs.push(model+" 429");lastErr=errs.join(" | ");break}
+      if(r.status===429){const q=quotaInfo(d);
+        if(q.day){dayLimit=true;coolDown(model,6*3600e3);errs.push(model+": richieste gratuite di oggi finite");lastErr=errs.join(" | ");break}
+        const wait=q.secs||20;
+        /* se Google chiede di aspettare poco, aspetta e riprova una volta sola */
+        if(wait<=25&&!waited[model]&&Date.now()-t0<60000){waited[model]=true;
+          for(let k=wait;k>0;k--){prog("Google chiede di aspettare "+k+" s…");await sleep(1000)}
+          mi--;continue}
+        coolDown(model,Math.max(30,wait)*1000);errs.push(model+" 429 (aspetta "+wait+" s)");lastErr=errs.join(" | ");break}
       if(!r.ok){const t=JSON.stringify(d||"");errs.push(model+" "+r.status+": "+((d&&d.error&&d.error.message)||t).slice(0,160));lastErr=errs.join(" | ");if(r.status===402)prepay=true;if(/API key|API_KEY|PERMISSION|UNAUTHENTICATED/i.test(t)||r.status===403||r.status===401)throw {code:"bad_key",detail:lastErr};break}
       if(CFG_OK[model]!==mode){CFG_OK[model]=mode;try{localStorage.setItem(CFG_STORE,JSON.stringify(CFG_OK))}catch(e){}}
       const text=((d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[]).map(p=>p.text||"").join("").trim();
@@ -658,7 +677,7 @@ async function gemini(input,json,audio,key,tier){
   }
   }finally{if(tick)clearInterval(tick)}
   if(audio)lastErr+=" | audio "+kb+" KB, "+(audio.secs?audio.secs.toFixed(1)+" s":"")+", attesa "+Math.round((Date.now()-t0)/1000)+" s";
-  throw {code:/ 402/.test(lastErr)?"prepay":/ 429/.test(lastErr)?"rate_limited":"ai_error",detail:lastErr};
+  throw {code:/ 402/.test(lastErr)?"prepay":dayLimit&&!/ 2\d\d|nessuna risposta/.test(lastErr)?"quota_day":/ 429|gratuite/.test(lastErr)?"rate_limited":"ai_error",detail:lastErr};
 }
 function makeSample(){
   const f=async(input,opts={})=>{const d=await gemini(input,false,opts.audio,null,opts.modelTier);const text=String(d.text||"");if(opts.onText)opts.onText({text,delta:text});return {text,truncated:false}};
@@ -719,7 +738,7 @@ function wireSettings(){
 }
 function errMsg(e){if(!(e&&e.detail))return noClaudeMsg(e);const d=String(e.detail);return noClaudeMsg(e)+" ("+(d.length>260?d.slice(0,120)+" … "+d.slice(-130):d)+")"}
 function noClaudeMsg(e){const c=e&&e.code;
-  return c==="no_key"?"Il Cervello non è collegato: aggiungi la chiave Gemini in Cervello > Impostazioni.":c==="bad_key"?"La chiave Gemini non funziona. Controlla di averla copiata tutta.":c==="rate_limited"?"Troppe richieste di fila. Aspetta un minuto e riprova.":c==="offline"?"Non c'è connessione. Controlla internet e riprova.":c==="prepay"?"Questa chiave è di un progetto Google collegato a un conto prepagato a zero. Serve una chiave creata con un account Google che non ha mai attivato pagamenti su AI Studio.":c==="timeout"?"Google ci mette troppo a rispondere. Riprova tra un momento.":c==="mic"?"Non riesco a usare il microfono. Controlla il permesso: Impostazioni > Safari > Microfono.":"Il Cervello non risponde. Riprova tra un momento."}
+  return c==="no_key"?"Il Cervello non è collegato: aggiungi la chiave Gemini in Cervello > Impostazioni.":c==="bad_key"?"La chiave Gemini non funziona. Controlla di averla copiata tutta.":c==="rate_limited"?"Google ha ricevuto troppe richieste in poco tempo. Aspetta un minuto e riprova.":c==="quota_day"?"Per oggi hai usato tutte le richieste gratuite di Google. Domani si ricaricano: intanto puoi usare i giochi senza microfono.":c==="offline"?"Non c'è connessione. Controlla internet e riprova.":c==="prepay"?"Questa chiave è di un progetto Google collegato a un conto prepagato a zero. Serve una chiave creata con un account Google che non ha mai attivato pagamenti su AI Studio.":c==="timeout"?"Google ci mette troppo a rispondere. Riprova tra un momento.":c==="mic"?"Non riesco a usare il microfono. Controlla il permesso: Impostazioni > Safari > Microfono.":"Il Cervello non risponde. Riprova tra un momento."}
 function ctx(){
   const g=prefs();
   return `Profilo: ragazzo di 18 anni con DSA. In testa parla bene in italiano, ma a voce con altre persone le parole gli si mischiano; in dialetto${S.dialetto?" ("+S.dialetto+")":""} gli viene più facile. Si annoia facilmente.
@@ -1248,7 +1267,7 @@ async function toggleRec(btn,onDone,maxS=60){
     recBusy=false;
     if(!a||a.secs<0.7){toast("Troppo corto: tocca, parla, poi tocca di nuovo.");render();return}
     progressCb=t=>{if(btn.isConnected)btn.innerHTML='<span class="spin"></span> '+esc(t)};prog("Il Cervello ascolta…");
-    let done=false;const guard=setTimeout(()=>{if(!done){progressCb=null;toast("Google non ha risposto in tempo. Riprova.");render()}},100000);
+    let done=false;const guard=setTimeout(()=>{if(!done){progressCb=null;toast("Google non ha risposto in tempo. Riprova.");render()}},200000);
     try{await onDone(a)}finally{done=true;clearTimeout(guard);progressCb=null}
     return;
   }
