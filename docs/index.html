@@ -270,7 +270,7 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
-const APP_VERSION="v15";
+const APP_VERSION="v16";
 let AUDIO_OK=true;try{AUDIO_OK=localStorage.getItem("vc-noaudio")!=="1"}catch(e){}
 function setAudioOk(v){AUDIO_OK=v;try{v?localStorage.removeItem("vc-noaudio"):localStorage.setItem("vc-noaudio","1")}catch(e){}}
 let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
@@ -317,6 +317,8 @@ async function gemini(input,json,audio,key,tier){
   let contents;
   if(Array.isArray(input))contents=input.slice(-24).map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:String(m.content||"").slice(0,8000)}]}));
   else contents=[{role:"user",parts:[{text:String(input||"").slice(0,20000)}]}];
+  while(contents.length>1&&contents[0].role!=="user")contents.shift();
+  contents=contents.reduce((acc,c)=>{const prev=acc[acc.length-1];if(prev&&prev.role===c.role)prev.parts.push(...c.parts);else acc.push(c);return acc},[]);
   if(audio){const last=contents[contents.length-1];
     last.parts.unshift({text:`Nota per l'ascolto: l'audio allegato è italiano parlato da un ragazzo delle Marche${S.dialetto?" ("+S.dialetto+")":""}, con DSA. A volte usa parole in dialetto, esita, ripete o lascia frasi a metà. Ascolta con molta attenzione tutto l'audio e trascrivi quello che dice davvero, parola per parola: non inventare parole che non senti e non correggerlo nella trascrizione. Se un pezzo non si capisce, scrivi […].`});
     last.parts.unshift({inline_data:{mime_type:audio.mime||"audio/wav",data:audio.data}})}
@@ -415,7 +417,7 @@ function wireSettings(){
     try{navigator.clipboard.writeText(t).then(()=>toast("Backup copiato. Incollalo in una nota."),()=>{ta.value=t;ta.select();toast("Tieni premuto sul testo e scegli Copia")})}catch(e){ta.value=t;ta.select()}};
   const r=q("#bkrest");if(r)r.onclick=()=>{try{const o=JSON.parse(q("#bktext").value);if(!o||!o.days)throw 0;S=migrate(o);save();toast("Backup ripristinato");render()}catch(e){toast("Questo testo non è un backup valido")}};
 }
-function errMsg(e){return noClaudeMsg(e)+(e&&e.detail?" ("+String(e.detail).slice(0,140)+")":"")}
+function errMsg(e){if(!(e&&e.detail))return noClaudeMsg(e);const d=String(e.detail);return noClaudeMsg(e)+" ("+(d.length>260?d.slice(0,120)+" … "+d.slice(-130):d)+")"}
 function noClaudeMsg(e){const c=e&&e.code;
   return c==="no_key"?"Il Cervello non è collegato: aggiungi la chiave Gemini in Cervello > Impostazioni.":c==="bad_key"?"La chiave Gemini non funziona. Controlla di averla copiata tutta.":c==="rate_limited"?"Troppe richieste di fila. Aspetta un minuto e riprova.":c==="offline"?"Non c'è connessione. Controlla internet e riprova.":c==="prepay"?"Questa chiave è di un progetto Google collegato a un conto prepagato a zero. Serve una chiave creata con un account Google che non ha mai attivato pagamenti su AI Studio.":c==="timeout"?"Google ci mette troppo a rispondere. Riprova tra un momento.":c==="mic"?"Non riesco a usare il microfono. Controlla il permesso: Impostazioni > Safari > Microfono.":"Il Cervello non risponde. Riprova tra un momento."}
 function ctx(){
@@ -500,11 +502,11 @@ function swapItem(i){
 }
 
 /* ================= NAVIGAZIONE ================= */
-let tab="oggi", run=null, gs=null, timer=null;
+let tab="oggi", run=null, gs=null, timer=null, pendingReload=false;
 try{const h=location.hash.slice(1);if(["oggi","giochi","dial","cervello","prog"].includes(h))tab=h}catch(e){}
 document.querySelector("nav.tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(b)go(b.dataset.tab)});
 function clearTimers(){clearTimeout(timer);clearInterval(timer);timer=null}
-function go(t){clearTimers();abortRec();stopSpeak();run=null;gs=null;tab=t;render();window.scrollTo(0,0)}
+function go(t){clearTimers();abortRec();stopSpeak();if(pendingReload){location.reload();return}run=null;gs=null;tab=t;render();window.scrollTo(0,0)}
 const app=document.getElementById("app");
 function render(){
   document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===tab?"page":"false"));
@@ -526,7 +528,7 @@ function finish(r){
     save();
     if(!planDone){toast(`+${pts} punti. Avanti con il prossimo!`);return play(S.plan.items[next].g,next)}
   } else save();
-  gs={end:true,planDone,r};render();
+  gs={end:true,planDone,r,pts};render();
 }
 function bored(){
   S.games.push({d:today(),g:run.g,b:1});cap(S.games);
@@ -559,7 +561,7 @@ function rPlay(){
     return;
   }
   if(gs&&gs.end){
-    const msg=gs.planDone?"Hai finito il percorso. +20 punti bonus.":gs.r===0?"Era difficile, e l'hai fatto lo stesso. È così che si migliora.":"Fatto. +10 punti.";
+    const msg=gs.planDone?"Hai finito il percorso. +20 punti bonus.":gs.r===0?"Era difficile, e l'hai fatto lo stesso. È così che si migliora.":`Fatto. +${gs.pts||10} punti.`;
     app.innerHTML=`<div class="hello"><p class="eyebrow">${esc(GAMES[run.g].n)}</p><h1>${gs.planDone?"Percorso completato":"Bravo"}</h1></div>
     <div class="card"><p>${msg}</p>${gs.planDone&&S.mission&&S.mission.d===today()&&!S.mission.done?`<p class="note">Manca la missione di oggi, da fare nella vita vera: ${esc(S.mission.text)}</p>`:""}
     <div class="row"><button class="btn" id="home">Torna a Oggi</button><button class="btn ghost" id="more">Altro gioco</button></div></div>`;
@@ -596,11 +598,12 @@ RENDER.leggi=()=>{
   app.querySelector("#chunky").onchange=e=>{S.chunky=e.target.checked;save();gs.c=S.chunky?0:99;render()};
   app.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>rateLeggi(+b.dataset.r));
   const ct=app.querySelector("#cont");if(ct)ct.onclick=()=>rateLeggi(gs.fb.r);
-  const rb=app.querySelector("#recl");if(rb)rb.onclick=()=>toggleRec(rb,async a=>{
+  const rb=app.querySelector("#recl");if(rb)rb.onclick=()=>toggleRec(rb,async a=>{const my=gs;
     try{const r=await sample.json(`Sei un logopedista gentile. Un ragazzo di 18 anni con DSA ha letto ad alta voce questa frase in italiano: "${c.join(" ")}". Ascolta l'audio allegato.
 Rispondi SOLO con JSON {"sentito":"trascrizione fedele di quello che ha detto, con le esitazioni scritte come …","voto":2 se letta fluida e corretta, 1 se con qualche esitazione o parola cambiata, 0 se molto difficoltosa o se non ha letto la frase,"commento":"max 18 parole, concreto e incoraggiante, in italiano semplice"}`,{audio:a});
+      if(gs!==my)return;
       gs.fb={r:Math.max(0,Math.min(2,Math.round(+r.voto)||0)),sentito:String(r.sentito||"…"),commento:String(r.commento||"")};
-    }catch(e){toast(errMsg(e))}
+    }catch(e){if(gs!==my)return;toast(errMsg(e))}
     render();
   },30);
 };
@@ -626,11 +629,12 @@ RENDER.racconta=()=>{
   app.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>finish(+b.dataset.r));
   const o=app.querySelector("#other");if(o)o.onclick=()=>{let n;do{n=pick(RACCONTI)}while(n===gs.item);gs.item=n;render()};
   const ct=app.querySelector("#cont");if(ct)ct.onclick=()=>finish(gs.fb.r);
-  const rb=app.querySelector("#recr");if(rb)rb.onclick=()=>toggleRec(rb,async a=>{
+  const rb=app.querySelector("#recr");if(rb)rb.onclick=()=>toggleRec(rb,async a=>{const my=gs;
     try{const r=await sample.json(`Sei un logopedista gentile. Un ragazzo di 18 anni con DSA (in dialetto gli viene più facile; in italiano, a voce, le parole gli si mischiano) racconta a voce questo argomento: "${gs.item.t}". Ascolta l'audio allegato.
 Rispondi SOLO con JSON {"sentito":"trascrizione fedele","voto":2 se ha raccontato in modo chiaro, 1 se con fatica o molte esitazioni, 0 se è riuscito a dire poco,"bene":"1 cosa fatta bene, max 15 parole","migliora":"riscrivi una sua frase in italiano più naturale, oppure dai 1 consiglio, max 22 parole"}`,{audio:a});
+      if(gs!==my)return;
       gs.fb={r:Math.max(0,Math.min(2,Math.round(+r.voto)||0)),sentito:String(r.sentito||"…"),bene:String(r.bene||""),migliora:String(r.migliora||"")};
-    }catch(e){toast(errMsg(e))}
+    }catch(e){if(gs!==my)return;toast(errMsg(e))}
     render();
   },90);
 };
@@ -638,18 +642,20 @@ Rispondi SOLO con JSON {"sentito":"trascrizione fedele","voto":2 se ha raccontat
 /* ---- Spiega senza dire ---- */
 INIT.spiega=()=>{const pool=SPIEGA.concat(S.extra.spiega);gs={items:shuffle(pool).slice(0,2),i:0,t:45,phase:"ready",rs:[]}};
 async function endSpiega(){
-  const it=gs.items[gs.i];
+  const my=gs;if(!my)return;const it=gs.items[gs.i];
   if(!gs.rec){gs.phase="rate";render();return}
   gs.rec=false;gs.phase="wait";render();
   const a=await Rec.stop();
+  if(gs!==my)return;
   if(!a||a.secs<1){gs.phase="rate";render();return}
   try{const r=await sample.json(`Gioco "spiega senza dire": un ragazzo spiega a voce, in italiano, una parola segreta senza dirla e senza usare le parole vietate (${it.no.join(", ")}). Ascolta l'audio allegato.
 Prima prova a indovinare la parola SOLO da quello che senti. Poi confrontala con la parola segreta, che era "${it.w}".
 Rispondi SOLO con JSON {"sentito":"trascrizione fedele","indovino":"la parola che hai indovinato ascoltando","giusta":true se la tua ipotesi è la parola segreta o un sinonimo stretto,"vietate_usate":["parole vietate che ha detto"],"detta_la_parola":true se ha detto la parola segreta,"commento":"max 15 parole, incoraggiante"}`,{audio:a});
+    if(gs!==my)return;
     const clean=!(r.vietate_usate||[]).length&&!r.detta_la_parola;
     gs.res={sentito:String(r.sentito||"…"),indovino:String(r.indovino||"?"),giusta:!!r.giusta,vietate:(r.vietate_usate||[]).map(String),detta:!!r.detta_la_parola,commento:String(r.commento||""),r:r.giusta&&clean?2:(r.giusta||clean)?1:0};
     gs.phase="res";speak(gs.res.giusta?"È "+gs.res.indovino+"!":"Secondo me è "+gs.res.indovino+".");
-  }catch(e){toast(errMsg(e));gs.phase="rate"}
+  }catch(e){if(gs!==my)return;toast(errMsg(e));gs.phase="rate"}
   render();
 }
 RENDER.spiega=()=>{
@@ -783,7 +789,7 @@ RENDER.minuto=()=>{
   }
   const c=gs.c, p=c.pezzi&&c.pezzi.length?c.pezzi:autoChunk(c.it);
   app.innerHTML=top+`<div class="hello"><h1>${c.kind==="studio"?"Rispondi a voce alta":"Dilla in italiano"}</h1><p class="muted">Prima prova a ricordare, poi controlla.</p></div>
-  <div class="card"><p style="font-size:1.2rem">${esc(c.dial||p.slice(0,-1).join(" ")+" …")}</p>
+  <div class="card"><p style="font-size:1.2rem">${esc(c.dial||(p.length>1?p.slice(0,-1).join(" ")+" …":"Prova a ricordare la tua frase"))}</p>
   ${gs.rev?`<p class="note">${esc(p.join(" "))}</p><div class="two"><button class="btn" id="y">La sapevo</button><button class="btn ghost" id="n">Non ancora</button></div>`:`<button class="btn wide" id="rv">Controlla</button>`}</div>`;
   const r=app.querySelector("#rv");if(r)r.onclick=()=>{gs.rev=true;render()};
   const step=ok=>{c.box=ok?Math.min(BOX_DAYS.length-1,(c.box||0)+1):0;c.due=addDays(BOX_DAYS[c.box]);finish(ok?2:1)};
@@ -847,29 +853,39 @@ function cleanVoice(x,rate){
   return y;
 }
 let recTimer=null;
-function abortRec(){clearInterval(recTimer);recTimer=null;if(Rec.on)Rec.stop().catch(()=>{})}
+function abortRec(){clearInterval(recTimer);recTimer=null;recBtnId=null;recBusy=false;if(Rec.on)Rec.stop().catch(()=>{})}
 const MIC_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
 const micHTML=(id,label)=>`<button class="btn mic wide" id="${id}">${MIC_SVG} ${label}</button>`;
 /* tocca per iniziare, tocca di nuovo per finire. onDone riceve l'audio */
+let recBusy=false,recBtnId=null,recDone=null,recMax=60;
 async function toggleRec(btn,onDone,maxS=60){
-  if(Rec.on){
+  if(recBusy)return;
+  if(Rec.on){recBusy=true;recBtnId=null;
     clearInterval(recTimer);btn.disabled=true;btn.classList.remove("rec");btn.innerHTML='<span class="spin"></span> Ti ascolto…';
     let a=null;try{a=await Rec.stop()}catch(e){a=null}
+    recBusy=false;
     if(!a||a.secs<0.7){toast("Troppo corto: tocca, parla, poi tocca di nuovo.");render();return}
     progressCb=t=>{if(btn.isConnected)btn.innerHTML='<span class="spin"></span> '+esc(t)};prog("Il Cervello ascolta…");
     let done=false;const guard=setTimeout(()=>{if(!done){progressCb=null;toast("Google non ha risposto in tempo. Riprova.");render()}},100000);
     try{await onDone(a)}finally{done=true;clearTimeout(guard);progressCb=null}
     return;
   }
-  try{stopSpeak();await Rec.start()}catch(e){toast(errMsg(e));return}
+  recBusy=true;
+  try{stopSpeak();await Rec.start()}catch(e){recBusy=false;toast(errMsg(e));return}
+  recBusy=false;recBtnId=btn.id;recDone=onDone;recMax=maxS;
   btn.classList.add("rec");const t0=Date.now();
-  const upd=()=>{const s=Math.floor((Date.now()-t0)/1000);btn.innerHTML=`<span class="dot"></span> Ho finito · ${s}s`;if(s>=maxS)btn.click()};
+  /* il pulsante viene cercato ogni volta per id: se lo schermo si ridisegna, resta quello giusto */
+  const cur=()=>(recBtnId&&document.getElementById(recBtnId))||btn;
+  const upd=()=>{const b=cur(),s=Math.floor((Date.now()-t0)/1000);
+    if(b!==btn){b.onclick=()=>toggleRec(b,recDone,recMax);btn=b}
+    b.classList.add("rec");b.innerHTML=`<span class="dot"></span> Ho finito · ${s}s`;if(s>=maxS)b.click()};
   upd();recTimer=setInterval(upd,500);
 }
 function speak(t){if(!S.tts||!window.speechSynthesis||!t)return;
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t));u.lang="it-IT";
     const v=speechSynthesis.getVoices().find(v=>/^it/i.test(v.lang));if(v)u.voice=v;u.rate=.95;speechSynthesis.speak(u)}catch(e){}}
 function stopSpeak(){try{speechSynthesis.cancel()}catch(e){}}
+document.addEventListener("click",function unlockTts(){try{if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(" ");u.volume=0;speechSynthesis.speak(u)}}catch(e){}document.removeEventListener("click",unlockTts,true)},true);
 const ttsToggle=()=>`<label class="toggle"><input type="checkbox" id="tts" ${S.tts?"checked":""}> Leggi ad alta voce le risposte</label>`;
 function wireTts(){const t=app.querySelector("#tts");if(t)t.onchange=e=>{S.tts=e.target.checked;if(!S.tts)stopSpeak();save()}}
 function voiceCardHTML(){return ""}
@@ -879,6 +895,7 @@ function wireVoice(){}
 INIT.conversazione=()=>{gs={phase:"pick",scene:"",log:[],busy:false,sug:[],showSug:false,meglio:"",err:"",notes:[],typing:false}};
 const userTurns=()=>gs.log.filter(m=>m.who==="io").length;
 async function convTurn(audio){
+  const my=gs;if(!my)return;
   gs.busy=true;gs.err="";render();
   const tr=gs.log.map(m=>(m.who==="io"?"RAGAZZO: ":"TU: ")+m.t).join("\n");
   const au=audio?`
@@ -889,16 +906,18 @@ Conversazione finora:
 ${tr||"(nessuna: inizia tu la scena)"}${au}
 Scrivi la tua prossima battuta: italiano parlato, massimo 25 parole, che lo inviti a rispondere. Se la sua ultima frase aveva errori o forme dialettali, metti in "meglio" quella frase riscritta in italiano corretto e naturale; se andava bene, stringa vuota. In "suggerimenti" metti 2 risposte brevi e naturali che lui potrebbe dare alla tua battuta.
 Rispondi SOLO con JSON {${audio?'"detto":"...","nota_voce":"...",':""}"battuta":"...","meglio":"...","suggerimenti":["...","..."]}`,{audio});
+    if(gs!==my)return;
     if(audio){const d=String(r.detto||"").trim();
       if(!d){gs.err="Non ho sentito bene. Riprova parlando un po' più vicino al telefono.";gs.busy=false;render();return}
       gs.log.push({who:"io",t:d});if(r.nota_voce)gs.notes.push(String(r.nota_voce))}
     gs.meglio=String(r.meglio||"");
     if(userTurns()>=5){gs.busy=false;return convEnd()}
     const b=String(r.battuta||"…");gs.log.push({who:"ai",t:b});gs.sug=(r.suggerimenti||[]).map(String).slice(0,2);gs.showSug=false;speak(b);
-  }catch(e){gs.err=noClaudeMsg(e)}
+  }catch(e){if(gs!==my)return;gs.err=errMsg(e)}
   gs.busy=false;if(tab==="play"&&run&&run.g==="conversazione"&&gs.phase==="talk")render();
 }
 async function convEnd(){
+  const my=gs;if(!my)return;
   gs.phase="fb";gs.busy=true;gs.err="";render();
   const tr=gs.log.map(m=>(m.who==="io"?"RAGAZZO: ":"ALTRO: ")+m.t).join("\n");
   try{const r=await sample.json(`Sei un logopedista gentile. Questo ragazzo di 18 anni con DSA si è allenato a parlare in italiano nella scena "${gs.scene}":
@@ -906,9 +925,10 @@ ${tr}
 ${gs.notes.length?"Note su come ha parlato a voce: "+gs.notes.join("; ")+".":"Ha risposto scrivendo."}
 Dagli un riscontro breve e incoraggiante, in italiano semplice: "bene" = 2 cose concrete che ha fatto bene; "migliora" = 1 sola cosa da migliorare, in una frase; "frase" = una frase utile per questa scena, in italiano naturale, da ripassare nei prossimi giorni.
 Rispondi SOLO con JSON {"bene":["...","..."],"migliora":"...","frase":"..."}`);
+    if(gs!==my)return;
     gs.fb={bene:(r.bene||[]).map(String).slice(0,2),migliora:String(r.migliora||""),frase:String(r.frase||"")};
     speak((gs.fb.bene[0]||"")+". "+gs.fb.migliora);
-  }catch(e){gs.err=noClaudeMsg(e);gs.fb={bene:[],migliora:"",frase:""}}
+  }catch(e){if(gs!==my)return;gs.err=errMsg(e);gs.fb={bene:[],migliora:"",frase:""}}
   gs.busy=false;if(tab==="play"&&run&&run.g==="conversazione")render();
 }
 RENDER.conversazione=()=>{
@@ -972,14 +992,15 @@ RENDER.studia=()=>{
     app.innerHTML=head("Studia un argomento","Scrivi l'argomento o incolla i tuoi appunti. Il Cervello prepara i punti chiave e 6 domande. Poi le domande tornano nel Ripasso nei giorni giusti.")+`
     <div class="card"><label for="mat">Cosa devi imparare?</label><textarea id="mat" maxlength="4000" style="min-height:140px" placeholder="es. la Prima guerra mondiale, oppure incolla qui gli appunti">${esc(gs.mat||"")}</textarea>
     <button class="btn wide" id="mk" ${gs.busy?"disabled":""}>${gs.busy?'<span class="spin"></span> Preparo…':"Prepara le domande"}</button>${gs.err?`<p class="no small">${esc(gs.err)}</p>`:""}</div>${boredBtn()}`;
-    app.querySelector("#mk").onclick=async()=>{const t=app.querySelector("#mat").value.trim();if(!t)return;gs.mat=t;gs.busy=true;gs.err="";render();
+    app.querySelector("#mk").onclick=async()=>{const t=app.querySelector("#mat").value.trim();if(!t)return;const my=gs;gs.mat=t;gs.busy=true;gs.err="";render();
       try{const r=await sample.json(`Aiuta un ragazzo di 18 anni con DSA, che si annoia facilmente, a studiare questo materiale:
 """${t}"""
 Crea: "titolo" (max 4 parole); "punti": da 3 a 5 punti chiave brevissimi (max 12 parole ciascuno); "domande": 6 domande dalla più facile alla più difficile, ognuna con una risposta breve (max 20 parole), in italiano semplice. Mescola i tipi: cos'è, perché, un esempio, un collegamento. Se il materiale è solo un argomento, usa conoscenze corrette e di base.
 Rispondi SOLO con JSON {"titolo":"...","punti":["..."],"domande":[{"d":"...","r":"..."}]}`,{modelTier:"default"});
+        if(gs!==my)return;
         const q=(r.domande||[]).filter(x=>x&&x.d&&x.r).map(x=>({d:String(x.d),r:String(x.r)})).slice(0,6);if(!q.length)throw{};
         Object.assign(gs,{phase:"punti",busy:false,title:String(r.titolo||"Studio"),punti:(r.punti||[]).map(String).slice(0,5),q,i:0,rev:false,known:[]});render()}
-      catch(e){gs.busy=false;gs.err=noClaudeMsg(e);render()}};
+      catch(e){if(gs!==my)return;gs.busy=false;gs.err=errMsg(e);render()}};
     return;
   }
   if(gs.phase==="punti"){
@@ -1301,7 +1322,8 @@ Rispondi SOLO con JSON: {"frasi":[{"pezzi":["..."]}],"indovina":[{"w":"...","c":
     const live=document.getElementById("live");live.scrollIntoView({block:"nearest"});
     const sys=`Sei il "Cervello", un allenatore di studio e di parola per questo ragazzo. ${ctx()}
 Regole: rispondi in italiano semplice; frasi corte; massimo 120 parole salvo richiesta; usa elenchi numerati brevi quando spieghi passi; niente emoji; tono da amico, mai da professore. Se chiede come studiare, proponi metodi con prove scientifiche (ricordare a memoria con domande, ripasso distanziato, mappe, spiegare a voce) adattati a DSA e a chi si annoia: sessioni brevi, varietà, piccoli obiettivi. Se scrive in dialetto, rispondi in italiano e, se utile, mostragli come dirlo in italiano. Se parla di problemi di salute o di forte disagio, consiglia con gentilezza di parlarne con un medico o una persona di fiducia.`;
-    const msgs=S.chat.map((m,i)=>({role:m.role,content:i===0?sys+"\n\nMessaggio: "+m.content:m.content}));
+    let hist=S.chat.slice();while(hist.length&&hist[0].role!=="user")hist.shift();
+    const msgs=hist.map((m,i)=>({role:m.role,content:i===0?sys+"\n\nMessaggio: "+m.content:m.content}));
     try{const r=await sample(msgs,{cache:false,onText:u=>{live.textContent=u.text}});
       S.chat.push({role:"assistant",content:r.text});cap(S.chat,20);save();live.removeAttribute("id")}
     catch(e){S.chat.pop();live.textContent=noClaudeMsg(e);live.removeAttribute("id");save()}
@@ -1338,7 +1360,7 @@ function rProg(){
 let setup="";try{setup=localStorage.getItem("vc-setup")||""}catch(e){}
 if(!GKEY&&!setup)renderLogin();else{render();boot()}
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(r=>r.update()).catch(()=>{});
-  let reloaded=false;const hadCtrl=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!hadCtrl||reloaded||Rec.on)return;reloaded=true;location.reload()});}
+  let reloaded=false;const hadCtrl=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!hadCtrl||reloaded)return;if(Rec.on||tab==="play"){pendingReload=true;return}reloaded=true;location.reload()});}
 </script>
 </body>
 </html>
