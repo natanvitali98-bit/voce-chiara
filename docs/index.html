@@ -492,6 +492,16 @@ body{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .storytext{font-size:1.2rem;line-height:1.7}
 .btn.right{background:var(--accent)!important;color:var(--on-accent)!important}
 .btn.wrong{background:var(--bad)!important;color:#fff!important}
+
+/* ===== scala delle missioni ===== */
+.ladder{display:flex;flex-direction:column;gap:6px}
+.rung{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--fg) 4%,var(--surface))}
+.rung .rn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:color-mix(in srgb,var(--fg) 8%,var(--surface));color:var(--muted)}
+.rung b{display:block;font-size:.95rem}
+.rung span:not(.rn){font-size:.78rem;color:var(--muted)}
+.rung.done .rn{background:var(--accent);color:var(--on-accent)}
+.rung.now{background:color-mix(in srgb,var(--warm) 14%,var(--surface));box-shadow:0 0 0 2px var(--warm)}
+.rung.now .rn{background:var(--warm);color:#fff;animation:beacon 2s ease-out infinite}
 /* ===== premi ===== */
 .reward-bg{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:24px;background:color-mix(in srgb,var(--bg) 55%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);animation:fadeIn .25s ease}
 .reward-bg.out{opacity:0;transition:opacity .2s}
@@ -654,7 +664,7 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
-const APP_VERSION="v23";
+const APP_VERSION="v24";
 let AUDIO_OK=true;try{AUDIO_OK=localStorage.getItem("vc-noaudio")!=="1"}catch(e){}
 function setAudioOk(v){AUDIO_OK=v;try{v?localStorage.removeItem("vc-noaudio"):localStorage.setItem("vc-noaudio","1")}catch(e){}}
 let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
@@ -862,6 +872,7 @@ function makeSample(){
 }
 function pushState(){}
 function boot(){sample=(GKEY||(S.localAI&&hasWebGPU()))?makeSample():null;sampleChecked=true;if(tab!=="play")render();
+  if(sample&&S.mission&&S.mission.d===today()&&!S.mission.done&&S.mission.src!=="cervello")aiMission();
   if(S.localAI&&hasWebGPU()&&S.localReady===localModelId())setTimeout(()=>{loadLocal().catch(()=>{})},2500)}
 async function saveKey(k){
   k=String(k||"").replace(/\s+/g,"").replace(/^["']|["']$/g,"");if(!k)throw {code:"no_key"};
@@ -921,7 +932,7 @@ function ctx(){
   return `Profilo: ragazzo di 18 anni con DSA. In testa parla bene in italiano, ma a voce con altre persone le parole gli si mischiano; in dialetto${S.dialetto?" ("+S.dialetto+")":""} gli viene più facile. Si annoia facilmente.
 Interessi: ${S.interessi||"non indicati"}.
 Livello lettura a voce: ${S.speak.lvl}/5. Memoria: sequenze da ${S.mem.span}. Giorni di fila: ${streak()}. Energia oggi: ${S.energy&&S.energy.d===today()?S.energy.v:"non indicata"}.
-Giochi che gli piacciono di più: ${g.liked.join(", ")||"ancora pochi dati"}. Giochi che lo annoiano: ${g.bored.join(", ")||"nessuno"}.${S.goal?`
+Missioni nella vita vera: gradino ${(S.mis&&S.mis.step)||1} di 6 (${SCALA_MIS[((S.mis&&S.mis.step)||1)-1].n}). Giochi che gli piacciono di più: ${g.liked.join(", ")||"ancora pochi dati"}. Giochi che lo annoiano: ${g.bored.join(", ")||"nessuno"}.${S.goal?`
 Il suo obiettivo: "${S.goal.text}"${S.goal.why?" (perché: "+S.goal.why+")":""}. Settimana ${goalWeek()+1} di ${S.goal.steps.length}${curStep()?": "+curStep().titolo:""}.
 Facilità a parlare italiano con le persone (1-5), nelle ultime rilevazioni: ${S.goal.checkins.slice(-4).map(c=>c.score).join(", ")||"nessuna"}.`:""}`;
 }
@@ -1117,6 +1128,8 @@ const BADGES=[
  {id:"mem10",n:"Memoria d'elefante",d:"10 giochi di memoria",c:"memoria",ok:()=>gcount(x=>GAMES[x.g]&&GAMES[x.g].cat==="memoria")>=10},
  {id:"perfetti10",n:"Senza sbagli",d:"10 giochi andati benissimo",c:"parole",ok:()=>gcount(x=>x.r===2)>=10},
  {id:"missioni5",n:"Vita vera",d:"5 missioni fatte nella vita vera",c:"studio",ok:()=>stat("missions")>=5},
+ {id:"gradino3",n:"Coraggio",d:"Gradino 3: parlare con sconosciuti",c:"dialogo",ok:()=>misState().step>=3},
+ {id:"gradino6",n:"In cima alla scala",d:"Gradino 6: spiegare cose lunghe",c:"dialogo",ok:()=>misState().step>=6},
  {id:"controllo",n:"Mi conosco",d:"Il primo controllo della settimana",c:"studio",ok:()=>!!(S.goal&&S.goal.checkins.length>=2)},
  {id:"dialetto5",n:"Traduttore",d:"5 frasi salvate dal dialetto",c:"parole",ok:()=>S.dict.filter(x=>x.kind!=="studio").length>=5},
  {id:"ripasso20",n:"Non dimentico",d:"20 frasi ricordate nel ripasso",c:"ripasso",ok:()=>stat("recalled")>=20},
@@ -1168,6 +1181,83 @@ function openChest(btn){
     else if(r<.55){S.double=today();res={title:"Punti doppi!",sub:"Il prossimo gioco di oggi vale il doppio dei punti."}}
     else{const n=pick([15,20,25,30,40]);save();gainXP(n);res={title:"+"+n+" punti",sub:"Punti extra solo per te."}}
     save();queueReward({kind:"Scrigno",title:res.title,sub:res.sub,visual:`<div class="chest open">${box?box.innerHTML:""}</div>`});render()},700);
+}
+
+
+/* ================= MISSIONI CHE SI EVOLVONO =================
+   Una scala di 6 gradini, dalla più facile alla più difficile.
+   Dopo ogni missione dici com'è andata: l'app sale o scende di gradino.
+   Ogni giorno il Cervello crea la missione su misura (senza Cervello: lista del gradino). */
+const SCALA_MIS=[
+ {n:"Con chi conosci bene",d:"famiglia e amici stretti",m:["A cena, racconta in italiano una cosa che hai fatto oggi, con almeno 3 frasi.","Chiedi in italiano a qualcuno di casa com'è andata la sua giornata, e ascolta la risposta.","Spiega in italiano a un amico un video o un gioco che ti piace.","Manda un vocale in italiano di 20 secondi a un amico.","Racconta in italiano a qualcuno di casa cosa farai domani."]},
+ {n:"Con chi conosci poco",d:"vicini, colleghi, compagni",m:["Saluta un vicino o un collega e chiedigli come sta, in italiano.","Chiedi in italiano a un collega o compagno un consiglio su una cosa piccola.","Fai un complimento in italiano a qualcuno che conosci poco, con una frase intera.","Chiedi in italiano a un conoscente cosa ha fatto nel fine settimana.","Proponi in italiano a qualcuno che conosci poco di fare una cosa insieme."]},
+ {n:"Con sconosciuti",d:"bar, negozi, informazioni",m:["Al bar ordina in italiano con una frase intera, per esempio: «Buongiorno, vorrei un caffè, per favore».","In un negozio chiedi in italiano dove si trova una cosa.","Chiedi un'informazione in italiano a una persona che non conosci.","Alla cassa fai una domanda in italiano, per esempio se c'è un'offerta.","In farmacia o dal tabaccaio chiedi una cosa in italiano, senza fretta."]},
+ {n:"Al telefono",d:"chiamate vere, senza vederti",m:["Chiama un amico o un parente e parla in italiano per almeno 2 minuti.","Telefona per chiedere un'informazione: un orario, un prezzo, una prenotazione.","Rispondi a una chiamata in italiano dall'inizio alla fine, con calma.","Chiama per prenotare qualcosa: un tavolo, un taglio di capelli, una visita.","Lascia un messaggio vocale in italiano chiaro, a qualcuno che non conosci bene."]},
+ {n:"In gruppo",d:"più persone che ascoltano",m:["In un gruppo di amici, racconta tu una cosa in italiano mentre gli altri ascoltano.","In una riunione o in classe, fai una domanda o un intervento in italiano.","In gruppo, proponi in italiano un'idea per cosa fare.","A tavola con più persone, racconta un fatto divertente in italiano.","In un gruppo, spiega in italiano come si fa una cosa che sai fare bene."]},
+ {n:"Spiegare cose lunghe",d:"lavoro, Pro Loco, presentazioni",m:["Spiega in italiano a qualcuno un tuo progetto per almeno un minuto, senza fermarti.","Al lavoro spiega in italiano come hai fatto una cosa, passo per passo.","Presenta in italiano un'idea a più persone, con un inizio, un centro e una fine.","Spiega in italiano a qualcuno un evento o un'organizzazione di cui ti occupi.","Racconta in italiano una storia lunga a qualcuno, con dettagli e ordine."]}
+];
+function misState(){S.mis=S.mis||{step:1,up:0,hist:[]};return S.mis}
+function misPickList(step,avoid){const L=SCALA_MIS[step-1].m.filter(x=>x!==avoid&&!misState().hist.slice(-6).some(h=>h.text===x));return pick(L.length?L:SCALA_MIS[step-1].m)}
+/* com'è andata: sale, resta o scende di gradino */
+function misRate(res,note){
+  const M=misState(),old=M.step;
+  M.hist.push({d:today(),text:S.mission.text,step:S.mission.step||M.step,res,note:note||""});cap(M.hist,60);
+  if(res==="facile"){M.up+=2}else if(res==="ok"){M.up+=1}else{M.up=0}
+  const last2=M.hist.slice(-2);
+  if(M.up>=4&&M.step<6){M.step++;M.up=0}
+  else if(last2.length===2&&last2.every(h=>h.res==="difficile"||h.res==="saltata")&&M.step>1){M.step--;M.up=0}
+  save();
+  if(M.step>old)queueReward({kind:"Vita vera",title:"Gradino "+M.step+": "+SCALA_MIS[M.step-1].n,sub:"Le missioni sono andate bene: adesso si sale. "+SCALA_MIS[M.step-1].d+".",visual:`<div class="lvlnum">${M.step}</div>`});
+  else if(M.step<old)toast("Torniamo al gradino "+M.step+", con calma: va benissimo così.");
+}
+/* crea la missione di oggi (subito dalla lista, poi il Cervello la rende su misura) */
+let misBusy=false;
+function newMission(n){
+  const M=misState(),st=curStep(),dn=Math.floor(Date.now()/864e5);
+  const text=(!n||n===1)&&st&&dn%2===0?st.missione:misPickList(M.step,S.mission&&S.mission.text);
+  S.mission={d:today(),text,step:M.step,done:false,n:n||1,src:"lista"};save();
+  if(sample)aiMission();
+}
+async function aiMission(){
+  if(misBusy)return;misBusy=true;const t=today(),n=S.mission.n,M=misState(),G=SCALA_MIS[M.step-1];
+  const hist=M.hist.slice(-6).map(h=>`- gradino ${h.step}: "${h.text}" → ${h.res}${h.note?' (nota: "'+h.note+'")':""}`).join("\n")||"nessuna ancora";
+  const giorni=["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"][new Date().getDay()];
+  try{const r=await sample.json(`Sei il "Cervello" di un'app che allena un ragazzo a parlare italiano con le persone nella vita vera. ${ctx()}
+Scala delle missioni (dal più facile al più difficile): ${SCALA_MIS.map((x,i)=>`${i+1}. ${x.n} (${x.d})`).join("; ")}.
+Adesso è al gradino ${M.step}: "${G.n}" (${G.d}). Oggi è ${giorni}.
+Ultime missioni e com'è andata:
+${hist}
+${curStep()?`Missione della settimana del suo obiettivo: "${curStep().missione}".`:""}
+Crea UNA missione per oggi: del gradino ${M.step}, concreta, fattibile oggi in meno di 5 minuti, diversa dalle ultime, legata alla sua vita e ai suoi interessi. Se l'ultima è stata difficile o saltata, rendila un po' più piccola. Scrivi anche una frase pronta per iniziare a parlare.
+Rispondi SOLO con JSON {"missione":"max 25 parole, italiano semplice","frase":"una frase pronta da dire per iniziare, max 12 parole"}`,{modelTier:"quick"});
+    if(S.mission&&S.mission.d===t&&S.mission.n===n&&!S.mission.done&&r&&r.missione){S.mission.text=String(r.missione).slice(0,220);S.mission.frase=String(r.frase||"").slice(0,120);S.mission.src="cervello";save();if(tab==="oggi")render()}
+  }catch(e){}
+  misBusy=false;
+}
+function missionHTML(){
+  const M=misState(),G=SCALA_MIS[(S.mission.step||M.step)-1],m=S.mission;
+  const head=`<div class="row between"><h2>Missione${(m.n||1)>1?" "+m.n:""} di oggi</h2><span class="tag w">gradino ${m.step||M.step} di 6</span></div>
+    <p class="small muted">${esc(G.n)} · ${esc(G.d)}</p><p style="font-size:1.08rem">${esc(m.text)}</p>
+    ${m.frase?`<p class="note small">Per iniziare puoi dire: <b>«${esc(m.frase)}»</b></p>`:""}`;
+  if(m.rating)return `<div class="card">${head}<p class="small muted">Com'è andata? Dimmelo e la prossima missione sarà fatta su misura.</p>
+    <div class="rate"><button data-mr="difficile">Difficile</button><button data-mr="ok">Così così</button><button data-mr="facile">Facile</button></div>
+    <input id="mnote" maxlength="140" placeholder="Una cosa successa (facoltativo)"></div>`;
+  if(m.done)return `<div class="card">${head}<p class="ok">Fatta! +20 punti</p>${(m.n||1)<3?`<button class="btn ghost wide" id="mis2">Dammi un'altra missione</button>`:`<p class="small muted">Per oggi le missioni sono finite. Domani ne arriva una nuova, fatta su misura.</p>`}</div>`;
+  return `<div class="card">${head}<div class="two"><button class="btn soft" id="misskip">Oggi è troppo</button><button class="btn" id="mis">L'ho fatta</button></div></div>`;
+}
+function wireMission(){
+  const q=x=>app.querySelector(x);
+  const mi=q("#mis");if(mi)mi.onclick=()=>{S.mission.done=true;S.mission.rating=true;addStat("missions");gainXP(20);celebrate(false);bump();save();setTimeout(checkBadges,600);toast("+20 punti. Questa vale doppio: è la vita vera.");render()};
+  app.querySelectorAll("[data-mr]").forEach(b=>b.onclick=()=>{const note=(q("#mnote")||{}).value||"";S.mission.rating=false;misRate(b.dataset.mr,note.trim());render()});
+  const sk=q("#misskip");if(sk)sk.onclick=()=>{misRate("saltata","");const M=misState(),small=Math.max(1,M.step-1);
+    S.mission={d:today(),text:misPickList(small,S.mission.text),step:small,done:false,n:(S.mission.n||1)+1,src:"lista"};save();toast("Va bene. Eccone una più piccola.");render()};
+  const m2=q("#mis2");if(m2)m2.onclick=()=>{newMission((S.mission.n||1)+1);render()};
+}
+function ladderHTML(){
+  const M=misState(),done=SCALA_MIS.map((_,i)=>M.hist.filter(h=>h.step===i+1&&h.res!=="saltata").length);
+  return `<div class="card"><div class="row between"><h2>La tua scala nella vita vera</h2><span class="tag w">gradino ${M.step}</span></div>
+  <p class="small muted">Le missioni salgono quando ti vengono facili e scendono se sono troppo. Ognuno ha il suo ritmo.</p>
+  <div class="ladder">${SCALA_MIS.map((x,i)=>i).reverse().map(i=>`<div class="rung ${i+1<M.step?"done":i+1===M.step?"now":""}"><span class="rn">${i+1}</span><div><b>${esc(SCALA_MIS[i].n)}</b><span>${esc(SCALA_MIS[i].d)}${done[i]?` · ${done[i]} ${done[i]===1?"fatta":"fatte"}`:""}</span></div></div>`).join("")}</div></div>`;
 }
 
 /* ================= NAVIGAZIONE ================= */
@@ -1951,7 +2041,8 @@ function afterHTML(){
 function rOggi(){
   useShield();
   const t=today(), h=new Date().getHours(), lvl=Math.floor(S.xp/100)+1, inLvl=S.xp%100;
-  if(!S.mission||S.mission.d!==t){const pool=MISSIONI.concat(S.extra.missioni),dn=Math.floor(Date.now()/864e5),st=curStep();S.mission={d:t,text:st&&dn%2===0?st.missione:pool[dn%pool.length],done:false};save()}
+  if(!S.mission||S.mission.d!==t){if(S.mission&&!S.mission.done&&S.mission.step)misRate("saltata","");else if(S.mission&&S.mission.rating){S.mission.rating=false}newMission(1)}
+  else if(!S.mission.step){S.mission.step=misState().step}
   const hasEnergy=S.energy&&S.energy.d===t;
   if(hasEnergy&&(!S.plan||S.plan.d!==t)){S.plan=makePlan({stanco:2,normale:3,carico:4}[S.energy.v]);save()}
   const plan=hasEnergy?S.plan:null;
@@ -1969,8 +2060,7 @@ function rOggi(){
     <div class="plan">${plan.items.map((x,i)=>`<div class="pitem ${x.done?"done":""} ${catOf(x.g)}">${gicon(x.g)}<div><div class="pn">${esc(GAMES[x.g].n)}</div><div class="small muted">${esc(GAMES[x.g].d)}</div></div>${x.done?"":`<button class="btn ghost sm" data-swap="${i}" aria-label="Cambia ${esc(GAMES[x.g].n)}">Cambia</button>`}</div>`).join("")}</div>
     ${left.length?`<button class="btn wide" id="start">${left.length<plan.items.length?"Continua":"Inizia"}</button>`:`<p class="ok">${plan.extra?"Sfida extra completata.":"Percorso completato. Ottimo lavoro."}</p>`}</div>`}
   ${hasEnergy&&!left.length?afterHTML():""}
-  <div class="card"><div class="row between"><h2>Missione${(S.mission.n||1)>1?" "+S.mission.n:""} di oggi</h2><span class="tag w">vita vera</span></div><p>${esc(S.mission.text)}</p>
-    ${S.mission.done?`<p class="ok">Fatta! +20 punti</p>${(S.mission.n||1)<3?`<button class="btn ghost wide" id="mis2">Dammi un'altra missione</button>`:`<p class="small muted">Per oggi le missioni sono finite. Domani ne arrivano di nuove.</p>`}`:`<button class="btn soft wide" id="mis">L'ho fatta</button>`}</div>
+  ${missionHTML()}
   <div class="card brain"><div class="row between"><h2>Il Cervello</h2>${S.tip&&S.tip.d===t?"":`<button class="btn sm" id="tip">Consiglio di oggi</button>`}</div>
     <p id="tiptext">${esc(S.tip&&S.tip.d===t?S.tip.text:hint())}</p></div>`;
   app.querySelectorAll("[data-e]").forEach(b=>b.onclick=()=>{S.energy={d:t,v:b.dataset.e};S.plan=makePlan({stanco:2,normale:3,carico:4}[b.dataset.e]);save();render()});
@@ -1985,8 +2075,7 @@ function rOggi(){
   const ch=app.querySelector("#chest");if(ch)ch.onclick=()=>openChest(ch);
   const ex=app.querySelector("#extra");if(ex)ex.onclick=()=>{S.plan=makePlan(2,true);save();play(S.plan.items[0].g,0)};
   app.querySelectorAll("[data-after]").forEach(b=>b.onclick=()=>play(b.dataset.after,null));
-  const mi=app.querySelector("#mis");if(mi)mi.onclick=()=>{S.mission.done=true;addStat("missions");gainXP(20);celebrate(false);bump();save();setTimeout(checkBadges,600);toast("+20 punti. Questa vale doppio: è la vita vera.");render()};
-  const m2=app.querySelector("#mis2");if(m2)m2.onclick=()=>{const pool=MISSIONI.concat(S.extra.missioni).filter(x=>x!==S.mission.text);S.mission={d:t,text:pick(pool),done:false,n:(S.mission.n||1)+1};save();render()};
+  wireMission();
   const tp=app.querySelector("#tip");if(tp){
     if(sampleChecked&&!sample)tp.hidden=true;
     tp.onclick=async()=>{if(!sample)return;tp.disabled=true;const el=app.querySelector("#tiptext");el.innerHTML='<span class="spin"></span> Ci penso…';
@@ -2165,6 +2254,7 @@ function rProg(){
   app.innerHTML=`<div class="hello"><p class="eyebrow">Progressi</p><h1>Come stai andando</h1></div>
   <div class="stats"><div class="stat"><b>${Math.floor(S.xp/100)+1}</b><span>livello (${S.xp} punti)</span></div><div class="stat"><b>${S.speak.lvl}/5</b><span>lettura a voce</span></div><div class="stat"><b>${S.mem.best}</b><span>sequenza più lunga</span></div></div>
   ${rewardsHTML()}
+  ${ladderHTML()}
   ${goalProgHTML()}
   <div class="card"><h2>Ultimi 14 giorni</h2><p class="muted small">Attività completate ogni giorno</p>
     <div class="bars" role="img" aria-label="Attività negli ultimi 14 giorni">${vals.map((v,i)=>`<div class="${v?"":"zero"} ${i===13?"today":""}" style="height:${v?Math.max(8,v/mx*100):2}%;animation-delay:${i*35}ms"></div>`).join("")}</div>
