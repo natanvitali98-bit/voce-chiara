@@ -270,6 +270,7 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
+let lastErr="";
 async function gemini(input,json,audio,key){
   key=key||GKEY;if(!key)throw {code:"no_key"};
   let contents;
@@ -283,18 +284,18 @@ async function gemini(input,json,audio,key){
       const generationConfig=fast?Object.assign({},base,{thinkingConfig:{thinkingBudget:0}}):base;
       try{r=await fetch(`${GEMINI}/${model}:generateContent`,{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":key},body:JSON.stringify({contents,generationConfig})})}
       catch(e){throw {code:"offline"}}
-      if(r.status===404)break;
+      if(r.status===404){lastErr=model+" 404";break}
       const d=await r.json().catch(()=>null);
       if(r.status===400&&fast&&!/API key|API_KEY/i.test(JSON.stringify(d||"")))continue;
       if(r.status===429)throw {code:"rate_limited"};
-      if(!r.ok){const t=JSON.stringify(d||"");throw {code:/API key|API_KEY|PERMISSION/i.test(t)||r.status===403?"bad_key":"ai_error"}}
+      if(!r.ok){const t=JSON.stringify(d||"");lastErr=model+" "+r.status+": "+((d&&d.error&&d.error.message)||t).slice(0,220);throw {code:/API key|API_KEY|PERMISSION|UNAUTHENTICATED/i.test(t)||r.status===403||r.status===401?"bad_key":"ai_error",detail:lastErr}}
       const text=((d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[]).map(p=>p.text||"").join("").trim();
       if(!json)return {text};
       let parsed=null;try{parsed=JSON.parse(text)}catch(e){const m=text.match(/\{[\s\S]*\}/);if(m)try{parsed=JSON.parse(m[0])}catch(_){}}
       return {json:parsed,text};
     }
   }
-  throw {code:"ai_error"};
+  throw {code:"ai_error",detail:lastErr};
 }
 function makeSample(){
   const f=async(input,opts={})=>{const d=await gemini(input,false,opts.audio);const text=String(d.text||"");if(opts.onText)opts.onText({text,delta:text});return {text,truncated:false}};
@@ -322,7 +323,7 @@ function wireKeyForm(after){
   const b=app.querySelector("#gsave");if(!b)return;
   b.onclick=async()=>{const m=app.querySelector("#gmsg");b.disabled=true;m.hidden=false;m.className="small muted";m.innerHTML='<span class="spin"></span> Provo la chiave…';
     try{await saveKey(app.querySelector("#gkey").value);toast("Cervello collegato!");after()}
-    catch(e){b.disabled=false;m.className="small no";m.textContent=noClaudeMsg(e)}};
+    catch(e){b.disabled=false;m.className="small no";m.textContent=noClaudeMsg(e)+(e&&e.detail?" (Dettaglio: "+e.detail+")":"")}};
 }
 function renderLogin(){
   document.querySelector("nav.tabs").hidden=true;
