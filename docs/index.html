@@ -270,7 +270,7 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
-const APP_VERSION="v12";
+const APP_VERSION="v13";
 let AUDIO_OK=true;try{AUDIO_OK=localStorage.getItem("vc-noaudio")!=="1"}catch(e){}
 function setAudioOk(v){AUDIO_OK=v;try{v?localStorage.removeItem("vc-noaudio"):localStorage.setItem("vc-noaudio","1")}catch(e){}}
 let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
@@ -278,62 +278,81 @@ let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
 async function fetchT(url,opts,ms){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||25000);
   try{return await fetch(url,Object.assign({},opts,{signal:c.signal}))}
   catch(e){throw (c.signal.aborted?{code:"timeout"}:{code:"offline"})}finally{clearTimeout(t)}}
-const MODEL_STORE="vc-models-2";
-let MODEL_LIST=null;try{MODEL_LIST=JSON.parse(localStorage.getItem(MODEL_STORE)||"null")}catch(e){}
-/* chiede a Google quali modelli può usare questa chiave e sceglie i migliori per testo e audio */
+const MODEL_STORE="vc-models-3",CFG_STORE="vc-cfg";
+let MODEL_SET=null;try{MODEL_SET=JSON.parse(localStorage.getItem(MODEL_STORE)||"null")}catch(e){}
+let CFG_OK={};try{CFG_OK=JSON.parse(localStorage.getItem(CFG_STORE)||"{}")||{}}catch(e){}
+let PICKED={key:"",set:null};
+const FALLBACK_SET={flash:MODELS,lite:[],gemma:[]};
+/* chiede a Google quali modelli può usare questa chiave: "flash" per ascoltare, "lite" per le cose veloci */
 async function pickModels(key){
+  if(PICKED.key===key&&PICKED.set)return PICKED.set;
   let r,d;prog("Controllo la chiave con Google…");
-  try{r=await fetchT(`${GEMINI}?pageSize=200`,{headers:{"x-goog-api-key":key}},15000);d=await r.json().catch(()=>null)}catch(e){if(e&&e.code==="timeout")return MODELS;throw e}
+  try{r=await fetchT(`${GEMINI}?pageSize=200`,{headers:{"x-goog-api-key":key}},15000);d=await r.json().catch(()=>null)}catch(e){if(e&&e.code==="timeout")return FALLBACK_SET;throw e}
   if(!r.ok){const t=JSON.stringify(d||"");const det="elenco modelli "+r.status+": "+((d&&d.error&&d.error.message)||t).slice(0,200);
     if(/API key|API_KEY|PERMISSION|UNAUTHENTICATED/i.test(t)||r.status===401||r.status===403)throw {code:"bad_key",detail:det};
-    return MODELS}
+    return FALLBACK_SET}
   const names=(d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>String(m.name).replace(/^models\//,""));
   const gsize=n=>{const m=n.match(/(\d+)b/);return m?parseInt(m[1]):0};
-  const gemma=names.filter(n=>/^gemma/.test(n)&&/it/.test(n)&&!/nano|e\d+b/.test(n)).sort((a,b)=>(parseFloat((b.match(/gemma-(\d+)/)||[0,0])[1])-parseFloat((a.match(/gemma-(\d+)/)||[0,0])[1]))||gsize(b)-gsize(a)).slice(0,2);
-  const bad=/image|tts|live|audio|embedding|robotics|computer|native|nano|gemma|learnlm/;
+  const gver=n=>parseFloat((n.match(/gemma-(\d+)/)||[0,0])[1]);
+  const gemma=names.filter(n=>/^gemma/.test(n)&&/it/.test(n)&&!/nano|e\d+b/.test(n)).sort((a,b)=>(gver(b)-gver(a))||gsize(b)-gsize(a)).slice(0,1);
+  const bad=/image|tts|live|audio|embedding|robotics|computer|native|nano|learnlm/;
   const ver=n=>{const m=n.match(/gemini-(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0};
-  const score=n=>(bad.test(n)?-1000:0)+(/flash/.test(n)?100:0)-(/lite/.test(n)?25:0)-(/preview|exp/.test(n)?15:0)+(/latest/.test(n)?8:0)+ver(n)*3;
-  const best=names.filter(n=>/^gemini/.test(n)).sort((a,b)=>score(b)-score(a)).filter(n=>score(n)>0).slice(0,3);
-  return (best.length?best:MODELS).concat(gemma);
+  const score=n=>-(/preview|exp/.test(n)?15:0)+(/latest/.test(n)?8:0)+ver(n)*3;
+  const gem=names.filter(n=>/^gemini/.test(n)&&!bad.test(n));
+  const flash=gem.filter(n=>/flash/.test(n)&&!/lite/.test(n)).sort((a,b)=>score(b)-score(a)).slice(0,2);
+  const lite=gem.filter(n=>/flash-lite/.test(n)).sort((a,b)=>score(b)-score(a)).slice(0,1);
+  const set={flash:flash.length?flash:MODELS,lite,gemma};
+  PICKED={key,set};return set;
+}
+/* modi per spegnere il "ragionamento lungo": i modelli nuovi e quelli vecchi ne accettano di diversi */
+const THINK={minimal:{thinkingLevel:"minimal"},low:{thinkingLevel:"low"},budget0:{thinkingBudget:0},none:null};
+function thinkOrder(m){
+  if(/^gemma/.test(m))return ["none"];
+  const all=/gemini-([3-9]|\d\d)|latest/.test(m)?["minimal","low","budget0","none"]:["budget0","none"];
+  const known=CFG_OK[m];return known?[known].concat(all.filter(x=>x!==known)):all;
 }
 let lastErr="";
-async function gemini(input,json,audio,key){
+async function gemini(input,json,audio,key,tier){
   key=key||GKEY;if(!key)throw {code:"no_key"};
   let contents;
   if(Array.isArray(input))contents=input.slice(-24).map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:String(m.content||"").slice(0,8000)}]}));
   else contents=[{role:"user",parts:[{text:String(input||"").slice(0,20000)}]}];
   if(audio)contents[contents.length-1].parts.unshift({inline_data:{mime_type:audio.mime||"audio/wav",data:audio.data}});
-  const base={temperature:.7,maxOutputTokens:2048};if(json)base.responseMimeType="application/json";
   let r;const errs=[];
-  let list=(key===GKEY&&MODEL_LIST)?MODEL_LIST:null;
-  if(!list){list=await pickModels(key);if(key===GKEY){MODEL_LIST=list;try{localStorage.setItem(MODEL_STORE,JSON.stringify(list))}catch(e){}}}
+  let set=(key===GKEY&&MODEL_SET&&MODEL_SET.flash)?MODEL_SET:null;
+  if(!set){set=await pickModels(key);if(key===GKEY){MODEL_SET=set;try{localStorage.setItem(MODEL_STORE,JSON.stringify(set))}catch(e){}}}
+  /* per ascoltare e per i ragionamenti lunghi prima "flash"; per tutto il resto prima "lite", che è più veloce */
+  const list=(audio||tier==="complex"?set.flash.concat(set.lite):set.lite.concat(set.flash)).concat(set.gemma||[]);
   let prepay=false;
   for(const model of list){
     const isGemma=/^gemma/.test(model);
     if(prepay&&!isGemma)continue;          /* con i crediti prepagati finiti, salta gli altri Gemini e prova Gemma */
     if(isGemma&&audio){errs.push(model+": non sente l'audio");lastErr=errs.join(" | ");continue}
-    prog(audio?"Il Cervello ascolta ("+model+")…":"Provo il modello "+model+"…");
-    for(const fast of (isGemma?[false]:[true,false])){
-      const generationConfig=isGemma?{temperature:.7,maxOutputTokens:2048}:fast?Object.assign({},base,{thinkingConfig:{thinkingBudget:0}}):base;
+    prog(audio?"Il Cervello ascolta…":"Il Cervello ci pensa…");
+    for(const mode of thinkOrder(model)){
+      const generationConfig={temperature:.7,maxOutputTokens:2048};
+      if(json&&!isGemma)generationConfig.responseMimeType="application/json";
+      if(THINK[mode])generationConfig.thinkingConfig=THINK[mode];
       try{r=await fetchT(`${GEMINI}/${model}:generateContent`,{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":key},body:JSON.stringify({contents,generationConfig})},audio?30000:25000)}
       catch(e){if(e&&e.code==="timeout"){errs.push(model+" nessuna risposta in tempo");lastErr=errs.join(" | ");break}throw e}
       if(r.status===404){errs.push(model+" 404");lastErr=errs.join(" | ");break}
       const d=await r.json().catch(()=>null);
-      if(r.status===400&&fast&&!/API key|API_KEY/i.test(JSON.stringify(d||"")))continue;
-      if(r.status===429){errs.push(model+" 429");lastErr=errs.join(" | ");continue}
+      if(r.status===400&&mode!=="none"&&!/API key|API_KEY/i.test(JSON.stringify(d||"")))continue;   /* impostazione non accettata: prova la prossima */
+      if(r.status===429){errs.push(model+" 429");lastErr=errs.join(" | ");break}
       if(!r.ok){const t=JSON.stringify(d||"");errs.push(model+" "+r.status+": "+((d&&d.error&&d.error.message)||t).slice(0,160));lastErr=errs.join(" | ");if(r.status===402)prepay=true;if(/API key|API_KEY|PERMISSION|UNAUTHENTICATED/i.test(t)||r.status===403||r.status===401)throw {code:"bad_key",detail:lastErr};break}
+      if(CFG_OK[model]!==mode){CFG_OK[model]=mode;try{localStorage.setItem(CFG_STORE,JSON.stringify(CFG_OK))}catch(e){}}
       const text=((d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[]).map(p=>p.text||"").join("").trim();
       if(!audio&&key===GKEY)setAudioOk(!isGemma);
       if(!json)return {text,model};
       let parsed=null;try{parsed=JSON.parse(text)}catch(e){const m=text.match(/\{[\s\S]*\}/);if(m)try{parsed=JSON.parse(m[0])}catch(_){}}
-      return {json:parsed,text};
+      return {json:parsed,text,model};
     }
   }
   throw {code:/ 402/.test(lastErr)?"prepay":/ 429/.test(lastErr)?"rate_limited":"ai_error",detail:lastErr};
 }
 function makeSample(){
-  const f=async(input,opts={})=>{const d=await gemini(input,false,opts.audio);const text=String(d.text||"");if(opts.onText)opts.onText({text,delta:text});return {text,truncated:false}};
-  f.json=async(input,opts={})=>{const d=await gemini(input,true,opts.audio);if(d.json==null)throw {code:"bad_json"};return d.json};
+  const f=async(input,opts={})=>{const d=await gemini(input,false,opts.audio,null,opts.modelTier);const text=String(d.text||"");if(opts.onText)opts.onText({text,delta:text});return {text,truncated:false}};
+  f.json=async(input,opts={})=>{const d=await gemini(input,true,opts.audio,null,opts.modelTier);if(d.json==null)throw {code:"bad_json"};return d.json};
   return f;
 }
 function pushState(){}
@@ -342,7 +361,7 @@ async function saveKey(k){
   k=String(k||"").replace(/\s+/g,"").replace(/^["']|["']$/g,"");if(!k)throw {code:"no_key"};
   const test=await gemini("Rispondi solo: ok",false,null,k);
   GKEY=k;try{localStorage.setItem(KEYSTORE,k)}catch(e){}
-  MODEL_LIST=null;try{localStorage.removeItem(MODEL_STORE)}catch(e){}
+  MODEL_SET=null;try{localStorage.removeItem(MODEL_STORE)}catch(e){}
   setAudioOk(!/^gemma/.test(test.model||""));
   sample=makeSample();sampleChecked=true;
 }
