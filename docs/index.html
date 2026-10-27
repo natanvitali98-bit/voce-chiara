@@ -270,7 +270,8 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
-const APP_VERSION="v9";
+const APP_VERSION="v10";
+let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
 /* fetch con tempo massimo: se Google non risponde, non resta bloccato */
 async function fetchT(url,opts,ms){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||25000);
   try{return await fetch(url,Object.assign({},opts,{signal:c.signal}))}
@@ -279,7 +280,7 @@ const MODEL_STORE="vc-models";
 let MODEL_LIST=null;try{MODEL_LIST=JSON.parse(localStorage.getItem(MODEL_STORE)||"null")}catch(e){}
 /* chiede a Google quali modelli può usare questa chiave e sceglie i migliori per testo e audio */
 async function pickModels(key){
-  let r,d;
+  let r,d;prog("Controllo la chiave con Google…");
   try{r=await fetchT(`${GEMINI}?pageSize=200`,{headers:{"x-goog-api-key":key}},15000);d=await r.json().catch(()=>null)}catch(e){if(e&&e.code==="timeout")return MODELS;throw e}
   if(!r.ok){const t=JSON.stringify(d||"");const det="elenco modelli "+r.status+": "+((d&&d.error&&d.error.message)||t).slice(0,200);
     if(/API key|API_KEY|PERMISSION|UNAUTHENTICATED/i.test(t)||r.status===401||r.status===403)throw {code:"bad_key",detail:det};
@@ -303,6 +304,7 @@ async function gemini(input,json,audio,key){
   let list=(key===GKEY&&MODEL_LIST)?MODEL_LIST:null;
   if(!list){list=await pickModels(key);if(key===GKEY){MODEL_LIST=list;try{localStorage.setItem(MODEL_STORE,JSON.stringify(list))}catch(e){}}}
   for(const model of list){
+    prog("Provo il modello "+model+"…");
     for(const fast of [true,false]){
       const generationConfig=fast?Object.assign({},base,{thinkingConfig:{thinkingBudget:0}}):base;
       try{r=await fetchT(`${GEMINI}/${model}:generateContent`,{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":key},body:JSON.stringify({contents,generationConfig})},audio?45000:25000)}
@@ -345,9 +347,9 @@ function keyFormHTML(intro){
 }
 function wireKeyForm(after){
   const b=app.querySelector("#gsave");if(!b)return;
-  b.onclick=async()=>{const m=app.querySelector("#gmsg");b.disabled=true;m.hidden=false;m.className="small muted";m.innerHTML='<span class="spin"></span> Provo la chiave…';
-    try{await saveKey(app.querySelector("#gkey").value);toast("Cervello collegato!");after()}
-    catch(e){b.disabled=false;m.className="small no";m.textContent=noClaudeMsg(e)+(e&&e.detail?" (Dettaglio: "+e.detail+")":"")}};
+  b.onclick=async()=>{const m=app.querySelector("#gmsg");b.disabled=true;m.hidden=false;m.className="small muted";progressCb=t=>{m.innerHTML='<span class="spin"></span> '+esc(t)};prog("Provo la chiave…");
+    try{await saveKey(app.querySelector("#gkey").value);progressCb=null;toast("Cervello collegato!");after()}
+    catch(e){progressCb=null;b.disabled=false;m.className="small no";m.textContent=noClaudeMsg(e)+(e&&e.detail?" (Dettaglio: "+e.detail+")":"")}};
 }
 function renderLogin(){
   document.querySelector("nav.tabs").hidden=true;
