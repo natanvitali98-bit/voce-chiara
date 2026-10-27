@@ -1,5 +1,6 @@
 // Voce Chiara: tiene in memoria la pagina per aprirla anche con poca connessione.
-const CACHE = "voce-chiara-v10";
+// La pagina viene sempre ricontrollata online, così gli aggiornamenti arrivano subito.
+const CACHE = "voce-chiara-v11";
 const SHELL = ["./", "manifest.webmanifest", "icon-192.png", "apple-touch-icon.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -10,10 +11,10 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
-  // prima la rete (versione più nuova), senza internet la copia salvata
+  const isPage = e.request.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith(".html");
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, isPage ? { cache: "no-cache" } : undefined)
       .then(r => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); } return r; })
-      .catch(() => caches.match(e.request).then(r => r || caches.match("./")))
+      .catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match("./")))
   );
 });
