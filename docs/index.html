@@ -173,6 +173,131 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 @keyframes pulse{50%{opacity:.72}}
 .heard{background:var(--bg);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
 .login{min-height:70vh;display:flex;flex-direction:column;justify-content:center;gap:18px}
+/* ===== Grafica e animazioni (v17): il tema è la voce, onde e movimento leggero ===== */
+:root{--shadow:0 1px 2px rgba(20,45,38,.06),0 10px 26px -16px rgba(20,45,38,.28);--shadow-press:0 1px 2px rgba(20,45,38,.08);--ease:cubic-bezier(.2,.8,.2,1);--spring:cubic-bezier(.2,.9,.3,1.25)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--shadow:0 1px 2px rgba(0,0,0,.45),0 12px 28px -18px rgba(0,0,0,.7);--shadow-press:0 1px 2px rgba(0,0,0,.5)}}
+:root[data-theme="dark"]{--shadow:0 1px 2px rgba(0,0,0,.45),0 12px 28px -18px rgba(0,0,0,.7);--shadow-press:0 1px 2px rgba(0,0,0,.5)}
+body{background:radial-gradient(120% 60% at 100% -10%,var(--accent-soft) 0,transparent 55%),radial-gradient(90% 50% at -10% 0,var(--warm-soft) 0,transparent 50%),var(--bg);background-attachment:fixed}
+.card,.gcard,details{box-shadow:var(--shadow);border-color:color-mix(in srgb,var(--line) 70%,transparent)}
+.card{border-radius:20px}
+.brain{border-color:var(--accent)}
+
+/* entrata delle schermate: i blocchi salgono uno dopo l'altro */
+@keyframes rise{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+.enter>*{animation:rise .42s var(--ease) both}
+.enter>*:nth-child(2){animation-delay:.05s}.enter>*:nth-child(3){animation-delay:.1s}.enter>*:nth-child(4){animation-delay:.15s}
+.enter>*:nth-child(5){animation-delay:.2s}.enter>*:nth-child(6){animation-delay:.24s}.enter>*:nth-child(7){animation-delay:.28s}.enter>*:nth-child(n+8){animation-delay:.32s}
+
+/* pulsanti: si schiacciano quando li tocchi */
+.btn,.gcard,.rate button,.tiles button,.chips button,.energy button,.seg button,nav.tabs button,.x{transition:transform .14s var(--ease),background-color .2s,box-shadow .2s,border-color .2s,color .2s,opacity .2s}
+.btn:active:not(:disabled),.gcard:active,.rate button:active,.tiles button:active,.chips button:active,.energy button:active{transform:scale(.96)}
+.btn{box-shadow:var(--shadow-press)}
+.btn:not(.ghost):not(.soft):not(.mic){background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 88%,white),var(--accent))}
+.gcard{border-radius:18px;position:relative;overflow:hidden}
+.gcard::after{content:"";position:absolute;right:-18px;bottom:-18px;width:64px;height:64px;border-radius:50%;background:var(--accent-soft);opacity:.55;transition:transform .3s var(--ease)}
+.gcard:active::after{transform:scale(1.4)}
+.gcard>*{position:relative;z-index:1}
+.rate button[data-r="2"]:active{background:var(--accent-soft)}
+.rate button[data-r="0"]:active{background:var(--warm-soft)}
+
+/* barra in basso: la voce attiva ha una "pillola" che compare */
+nav.tabs{background:color-mix(in srgb,var(--surface) 88%,transparent);-webkit-backdrop-filter:saturate(1.4) blur(14px);backdrop-filter:saturate(1.4) blur(14px)}
+nav.tabs button svg{transition:transform .25s var(--spring)}
+nav.tabs button[aria-current="page"] svg{transform:translateY(-1px) scale(1.12)}
+nav.tabs button[aria-current="page"]{animation:navpill .3s var(--spring)}
+@keyframes navpill{from{background:transparent;transform:scale(.9)}}
+
+/* Oggi: intestazione con l'onda della voce */
+.hero{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:6px 2px 0}
+.wave{display:flex;align-items:center;gap:5px;height:56px}
+.wave i{width:7px;border-radius:4px;background:linear-gradient(180deg,var(--warm),var(--accent));animation:wave 1.6s ease-in-out infinite;height:40%}
+.wave i:nth-child(1){animation-delay:-.9s}.wave i:nth-child(2){animation-delay:-.6s}.wave i:nth-child(3){animation-delay:-.3s}
+.wave i:nth-child(4){animation-delay:0s}.wave i:nth-child(5){animation-delay:-.45s}.wave i:nth-child(6){animation-delay:-.75s}.wave i:nth-child(7){animation-delay:-1.05s}
+@keyframes wave{0%,100%{height:28%}50%{height:96%}}
+.hero h1{font-size:1.75rem}
+
+/* serie di giorni: fiammella */
+.flame{width:30px;height:30px;align-self:center;transform-origin:50% 90%;animation:flicker 2.4s ease-in-out infinite}
+.flame path:first-child{fill:var(--warm)}.flame path:last-child{fill:var(--warm-soft)}
+@keyframes flicker{0%,100%{transform:rotate(-3deg) scale(1)}50%{transform:rotate(3deg) scale(1.06)}}
+.flame.off{animation:none;opacity:.35;filter:grayscale(1)}
+
+/* barre che si riempiono */
+@keyframes growX{from{width:0}}
+.bar{height:12px;border-radius:6px}
+.bar i{background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 60%,var(--warm)));animation:growX 1s var(--ease) both .15s}
+@keyframes growY{from{transform:scaleY(0)}}
+.bars div{transform-origin:bottom;animation:growY .7s var(--ease) both}
+.steps i{transition:background .3s}
+.steps i.on{animation:stepOn .4s var(--spring) both}
+@keyframes stepOn{from{transform:scaleX(.3)}}
+
+/* percorso: spunta che "scatta" */
+.pitem.done .tick{animation:tickpop .45s var(--spring)}
+@keyframes tickpop{0%{transform:scale(.4)}100%{transform:scale(1)}}
+
+/* frase a pezzi: il pezzo attuale si accende */
+.chunk{transition:opacity .35s var(--ease),background .35s,transform .35s var(--ease)}
+.chunk.cur{transform:scale(1.04);box-shadow:inset 0 -3px 0 var(--warm)}
+.chunk.off{transform:translateY(2px)}
+
+/* memoria: ogni parola appare con un piccolo salto */
+.flash{animation:pop .35s var(--spring)}
+@keyframes pop{from{opacity:0;transform:scale(.7)}}
+.answer span,.msg,.heard,.note,.clues div{animation:pop .3s var(--spring) both}
+.msg{box-shadow:var(--shadow-press)}
+.word{animation:pop .4s var(--spring) both}
+
+/* "il Cervello ci pensa": tre puntini che ondeggiano */
+.spin{width:6px;height:6px;border:0;border-radius:50%;background:currentColor;color:var(--accent);margin:0 18px 0 2px;vertical-align:middle;
+  box-shadow:9px 0 0 currentColor,18px 0 0 currentColor;animation:think 1s ease-in-out infinite}
+.btn .spin,.msg.me .spin{color:inherit}
+@keyframes think{0%,100%{transform:translateY(0);box-shadow:9px 0 0 currentColor,18px 0 0 currentColor}
+  25%{transform:translateY(-4px);box-shadow:9px 4px 0 currentColor,18px 0 0 currentColor}
+  50%{transform:translateY(0);box-shadow:9px -4px 0 currentColor,18px 0 0 currentColor}
+  75%{transform:translateY(0);box-shadow:9px 0 0 currentColor,18px -4px 0 currentColor}}
+
+/* microfono: anelli che si allargano e barre che seguono la tua voce */
+.btn.mic{position:relative;overflow:visible;background:linear-gradient(180deg,color-mix(in srgb,var(--warm) 85%,white),var(--warm))}
+.btn.mic.rec{background:linear-gradient(180deg,color-mix(in srgb,var(--bad) 85%,white),var(--bad));animation:none}
+.btn.mic.rec::before,.btn.mic.rec::after{content:"";position:absolute;inset:0;border-radius:inherit;border:2px solid var(--bad);animation:ring 1.6s var(--ease) infinite;pointer-events:none}
+.btn.mic.rec::after{animation-delay:.8s}
+@keyframes ring{from{opacity:.7;transform:scale(1)}to{opacity:0;transform:scale(1.12,1.45)}}
+.meter{display:inline-flex;align-items:center;gap:3px;height:22px}
+.meter i{width:4px;height:100%;border-radius:2px;background:currentColor;transform:scaleY(.25);transition:transform .08s linear}
+.meter.big{height:44px;gap:5px;justify-content:center;width:100%;color:var(--bad)}
+.meter.big i{width:7px}
+
+/* tempo di "Spiega senza dire": un anello che si svuota */
+.tring{position:relative;width:132px;height:132px;margin:4px auto}
+.tring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.tring circle{fill:none;stroke-width:10;stroke-linecap:round}
+.tring .tbg{stroke:var(--line)}
+.tring .tfg{stroke:var(--accent);stroke-dasharray:326.7;transition:stroke-dashoffset 1s linear,stroke .3s}
+.tring.low .tfg{stroke:var(--warm)}
+.tring .timer{position:absolute;inset:0;display:grid;place-items:center;font-size:2.6rem}
+
+/* fine gioco: spunta disegnata e punti che volano */
+.donecheck{width:84px;height:84px;margin:6px auto 0}
+.donecheck circle{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5;stroke-dasharray:151;stroke-dashoffset:151;animation:draw .6s var(--ease) forwards}
+.donecheck path{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s var(--ease) .45s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.endhead{text-align:center;align-items:center}
+.pts{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:40;transform:translateX(-50%);font-weight:700;font-size:1.6rem;color:var(--warm);
+  text-shadow:0 2px 0 var(--surface);pointer-events:none;animation:ptsUp 1.3s var(--ease) forwards}
+@keyframes ptsUp{0%{opacity:0;transform:translate(-50%,16px) scale(.6)}20%{opacity:1;transform:translate(-50%,0) scale(1.15)}100%{opacity:0;transform:translate(-50%,-46px) scale(1)}}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:39}
+
+/* avviso in basso: sale dolcemente */
+.toast{animation:toastIn .32s var(--spring);box-shadow:0 10px 30px -10px rgba(0,0,0,.4)}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,14px) scale(.96)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* schermata di accesso */
+.login .wave{height:80px;justify-content:center}
+.login .wave i{width:9px}
+
+@media (prefers-reduced-motion:reduce){.wave i{height:60%}.meter i{transform:scaleY(.5)}}
+
 </style>
 </head>
 <body>
@@ -270,7 +395,7 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
-const APP_VERSION="v16";
+const APP_VERSION="v17";
 let AUDIO_OK=true;try{AUDIO_OK=localStorage.getItem("vc-noaudio")!=="1"}catch(e){}
 function setAudioOk(v){AUDIO_OK=v;try{v?localStorage.removeItem("vc-noaudio"):localStorage.setItem("vc-noaudio","1")}catch(e){}}
 let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
@@ -392,7 +517,7 @@ function wireKeyForm(after){
 }
 function renderLogin(){
   document.querySelector("nav.tabs").hidden=true;
-  app.innerHTML=`<div class="login"><div class="hello"><p class="eyebrow">Voce Chiara</p><h1>Collega il Cervello</h1></div>
+  app.innerHTML=`<div class="login">${WAVE_HTML}<div class="hello" style="text-align:center"><p class="eyebrow">Voce Chiara</p><h1>Collega il Cervello</h1></div>
   <div class="card">${keyFormHTML(`<p class="muted">Il Cervello ti ascolta, ti risponde e crea esercizi per te. Serve una chiave gratuita di Google Gemini. Ci vogliono 2 minuti.</p>`)}
   <button class="btn ghost" id="skip">Lo faccio dopo</button></div></div>`;
   const done=()=>{try{localStorage.setItem("vc-setup","1")}catch(e){}document.querySelector("nav.tabs").hidden=false;render()};
@@ -501,6 +626,50 @@ function swapItem(i){
   it.g=wpick(opts.length?opts:Object.keys(GAMES).filter(g=>usable(g)&&g!==it.g)); save();
 }
 
+
+/* ================= ANIMAZIONI ================= */
+const REDUCED=(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})();
+const WAVE_HTML='<div class="wave" aria-hidden="true">'+"<i></i>".repeat(7)+'</div>';
+const FLAME_SVG=on=>`<svg class="flame ${on?"":"off"}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-6 1-9.5z"/><path d="M12 13c1 1.5 2 2.3 2 3.8a2 2 0 0 1-4 0c0-1.2.9-2 2-3.8z"/></svg>`;
+const DONE_SVG='<svg class="donecheck" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg>';
+let lastView="";
+function viewKey(){
+  if(tab!=="play")return tab;
+  if(!gs)return "play:"+(run&&run.g);
+  return "play:"+(run&&run.g)+":"+(gs.end?"end":[gs.phase||"",gs.i==null?"":gs.i,gs.round==null?"":gs.round,gs.k||""].join(":"));
+}
+function animateView(){const k=viewKey();if(k===lastView)return;lastView=k;app.classList.remove("enter");void app.offsetWidth;app.classList.add("enter")}
+function floatPts(t){if(REDUCED)return;const el=document.createElement("div");el.className="pts";el.textContent=t;document.body.appendChild(el);setTimeout(()=>el.remove(),1400)}
+function celebrate(big){
+  if(REDUCED)return;
+  const cs=getComputedStyle(document.documentElement),col=["--accent","--warm","--bad","--accent-soft","--warm-soft"].map(v=>cs.getPropertyValue(v).trim()||"#2c6b5a");
+  let c=document.getElementById("confetti");if(c)c.remove();
+  c=document.createElement("canvas");c.id="confetti";document.body.appendChild(c);
+  const dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;c.width=W*dpr;c.height=H*dpr;
+  const x=c.getContext("2d");x.scale(dpr,dpr);
+  const N=big?150:60,ps=[];
+  for(let i=0;i<N;i++){const a=-Math.PI/2+(Math.random()-.5)*(big?2.2:1.4),v=(big?9:7)+Math.random()*6;
+    ps.push({x:W/2+(Math.random()-.5)*(big?W*.5:80),y:H*(big?.45:.32),vx:Math.cos(a)*v,vy:Math.sin(a)*v,r:Math.random()*Math.PI,vr:(Math.random()-.5)*.3,
+      w:5+Math.random()*6,h:8+Math.random()*8,c:col[i%col.length],round:Math.random()<.3})}
+  const t0=performance.now(),dur=big?2200:1500;
+  (function f(t){const k=(t-t0)/dur;x.clearRect(0,0,W,H);
+    for(const p of ps){p.vy+=.28;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.globalAlpha=Math.max(0,1-k*k);x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;
+      if(p.round){x.beginPath();x.arc(0,0,p.w/2,0,7);x.fill()}else x.fillRect(-p.w/2,-p.h/2,p.w,p.h*.6);x.restore()}
+    if(k<1)requestAnimationFrame(f);else c.remove()})(t0);
+}
+function gainXP(n){const before=Math.floor(S.xp/100);S.xp+=n;floatPts("+"+n);
+  if(Math.floor(S.xp/100)>before)setTimeout(()=>{toast("Livello "+(before+2)+"! Continua così.");celebrate(true)},450)}
+/* barre del microfono: seguono il volume della tua voce */
+let meterOn=false;
+function meterLoop(){
+  if(!Rec.on){meterOn=false;document.querySelectorAll(".meter i").forEach(x=>x.style.transform="");return}
+  meterOn=true;const L=Math.min(1,(Rec.level||0)*7),shape=[.45,.75,1,.75,.45,.65,.9];
+  document.querySelectorAll(".meter").forEach(m=>m.querySelectorAll("i").forEach((x,i)=>{const f=shape[i%shape.length];
+    x.style.transform=`scaleY(${(.18+.82*Math.min(1,L*f*(.75+Math.random()*.5))).toFixed(3)})`}));
+  requestAnimationFrame(meterLoop);
+}
+const METER=(n,big)=>`<span class="meter${big?" big":""}" aria-hidden="true">${"<i></i>".repeat(n)}</span>`;
+
 /* ================= NAVIGAZIONE ================= */
 let tab="oggi", run=null, gs=null, timer=null, pendingReload=false;
 try{const h=location.hash.slice(1);if(["oggi","giochi","dial","cervello","prog"].includes(h))tab=h}catch(e){}
@@ -510,8 +679,9 @@ function go(t){clearTimers();abortRec();stopSpeak();if(pendingReload){location.r
 const app=document.getElementById("app");
 function render(){
   document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===tab?"page":"false"));
-  if(tab==="play") return rPlay();
-  ({oggi:rOggi,giochi:rGiochi,dial:rDial,cervello:rCervello,prog:rProg})[tab]();
+  if(tab==="play")rPlay();
+  else ({oggi:rOggi,giochi:rGiochi,dial:rDial,cervello:rCervello,prog:rProg})[tab]();
+  animateView();
 }
 
 /* ================= MOTORE DI GIOCO ================= */
@@ -519,7 +689,7 @@ function play(g,planIdx){clearTimers();abortRec();stopSpeak();run={g,planIdx,t0:
 function finish(r){
   clearTimers();
   S.games.push({d:today(),g:run.g,r});cap(S.games);
-  const pts=(run.planIdx!=null&&S.plan&&S.plan.extra)?20:10; S.xp+=pts; bump();
+  const pts=(run.planIdx!=null&&S.plan&&S.plan.extra)?20:10; gainXP(pts); bump();
   let planDone=false;
   if(run.planIdx!=null&&S.plan&&S.plan.d===today()){
     S.plan.items[run.planIdx].done=true;
@@ -528,7 +698,7 @@ function finish(r){
     save();
     if(!planDone){toast(`+${pts} punti. Avanti con il prossimo!`);return play(S.plan.items[next].g,next)}
   } else save();
-  gs={end:true,planDone,r,pts};render();
+  gs={end:true,planDone,r,pts};render();celebrate(planDone);
 }
 function bored(){
   S.games.push({d:today(),g:run.g,b:1});cap(S.games);
@@ -552,7 +722,7 @@ function wire(){
 function rPlay(){
   if(gs&&gs.end&&run.g==="minuto"){
     const st=streak();
-    app.innerHTML=`<div class="hello"><p class="eyebrow">1 minuto</p><h1>Fatto!</h1></div>
+    app.innerHTML=`<div class="hello endhead">${DONE_SVG}<p class="eyebrow">1 minuto</p><h1>Fatto!</h1></div>
     <div class="card"><div class="row" style="gap:8px;align-items:baseline"><span class="big">${st}</span><span class="muted">${st===1?"giorno":"giorni"} di fila</span></div>
     <p>Questo minuto conta davvero. Un'abitudine nasce dal ripetere una cosa piccola ogni giorno nello stesso momento, non da quanto fai.</p>
     <p class="small muted">Se vuoi, continua. Se no, va benissimo così: ci vediamo ${S.anchor?"dopo che "+esc(S.anchor):"domani"}.</p>
@@ -562,7 +732,7 @@ function rPlay(){
   }
   if(gs&&gs.end){
     const msg=gs.planDone?"Hai finito il percorso. +20 punti bonus.":gs.r===0?"Era difficile, e l'hai fatto lo stesso. È così che si migliora.":`Fatto. +${gs.pts||10} punti.`;
-    app.innerHTML=`<div class="hello"><p class="eyebrow">${esc(GAMES[run.g].n)}</p><h1>${gs.planDone?"Percorso completato":"Bravo"}</h1></div>
+    app.innerHTML=`<div class="hello endhead">${DONE_SVG}<p class="eyebrow">${esc(GAMES[run.g].n)}</p><h1>${gs.planDone?"Percorso completato":"Bravo"}</h1></div>
     <div class="card"><p>${msg}</p>${gs.planDone&&S.mission&&S.mission.d===today()&&!S.mission.done?`<p class="note">Manca la missione di oggi, da fare nella vita vera: ${esc(S.mission.text)}</p>`:""}
     <div class="row"><button class="btn" id="home">Torna a Oggi</button><button class="btn ghost" id="more">Altro gioco</button></div></div>`;
     app.querySelector("#home").onclick=()=>go("oggi"); app.querySelector("#more").onclick=()=>go("giochi");
@@ -663,7 +833,7 @@ RENDER.spiega=()=>{
   app.innerHTML=head("Spiega senza dire",`Parola ${gs.i+1} di 2. ${v?"Spiegala a voce senza usare le parole vietate: il Cervello prova a indovinarla.":"Spiegala a voce come a un amico, in italiano, senza usare le parole vietate."}`)+`
   <div class="card"><div class="word">${esc(it.w)}</div><p class="small muted" style="text-align:center">Parole vietate</p><div class="forbid">${it.no.map(x=>`<span>${esc(x)}</span>`).join("")}</div>
   ${gs.phase==="ready"?`<button class="btn wide ${v?"mic":""}" id="go">${v?MIC_SVG+" ":""}Via! (45 secondi)</button>`
-  :gs.phase==="run"?`<div class="timer ${gs.t<=10?"low":""}" aria-live="off">${gs.t}</div><button class="btn soft wide" id="stop">Ho finito</button>${gs.rec?`<p class="small muted" style="text-align:center">Ti sto ascoltando…</p>`:""}`
+  :gs.phase==="run"?`<div class="tring ${gs.t<=10?"low":""}"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="tbg" cx="60" cy="60" r="52"/><circle class="tfg" cx="60" cy="60" r="52" style="stroke-dashoffset:${(326.7*(1-gs.t/45)).toFixed(1)}"/></svg><div class="timer ${gs.t<=10?"low":""}" aria-live="off">${gs.t}</div></div>${gs.rec?METER(7,true)+`<p class="small muted" style="text-align:center">Ti sto ascoltando…</p>`:""}<button class="btn soft wide" id="stop">Ho finito</button>`
   :gs.phase==="wait"?`<p><span class="spin"></span> Il Cervello ci pensa…</p>`
   :gs.phase==="res"?`<div class="heard"><p class="eyebrow">Il Cervello dice</p><p style="font-size:1.4rem;font-weight:600" class="${gs.res.giusta?"ok":"no"}">${esc(gs.res.indovino)}${gs.res.giusta?" — giusto!":""}</p>
       ${gs.res.vietate.length?`<p class="no small">Hai usato: ${gs.res.vietate.map(esc).join(", ")}</p>`:""}${gs.res.detta?`<p class="no small">Hai detto la parola segreta.</p>`:""}
@@ -672,7 +842,9 @@ RENDER.spiega=()=>{
   const g=app.querySelector("#go");if(g)g.onclick=async()=>{
     if(v){try{stopSpeak();await Rec.start();gs.rec=true}catch(e){gs.rec=false;toast(errMsg(e))}}
     gs.phase="run";render();
-    timer=setInterval(()=>{gs.t--;const el=app.querySelector(".timer");if(el){el.textContent=gs.t;el.classList.toggle("low",gs.t<=10)}if(gs.t<=0){clearTimers();endSpiega()}},1000)};
+    timer=setInterval(()=>{gs.t--;const el=app.querySelector(".timer");if(el){el.textContent=gs.t;el.classList.toggle("low",gs.t<=10)}
+      const fg=app.querySelector(".tfg"),ring=app.querySelector(".tring");if(fg)fg.style.strokeDashoffset=(326.7*(1-Math.max(0,gs.t)/45)).toFixed(1);if(ring)ring.classList.toggle("low",gs.t<=10);
+      if(gs.t<=0){clearTimers();endSpiega()}},1000)};
   const s=app.querySelector("#stop");if(s)s.onclick=()=>{clearTimers();endSpiega()};
   const next=r=>{gs.rs.push(r);gs.i++;if(gs.i>=gs.items.length)finish(Math.round(gs.rs.reduce((a,c)=>a+c,0)/gs.rs.length));else{gs.t=45;gs.phase="ready";gs.res=null;render()}};
   app.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>next(+b.dataset.r));
@@ -806,8 +978,9 @@ const Rec={on:false,
     try{this.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}})}
     catch(e){try{this.ctx.close()}catch(_){}throw {code:"mic"}}
     this.src=this.ctx.createMediaStreamSource(this.stream);this.proc=this.ctx.createScriptProcessor(4096,1,1);this.bufs=[];this.rate=this.ctx.sampleRate;
-    this.proc.onaudioprocess=e=>{if(this.on)this.bufs.push(new Float32Array(e.inputBuffer.getChannelData(0)))};
-    this.src.connect(this.proc);this.proc.connect(this.ctx.destination);this.on=true;
+    this.proc.onaudioprocess=e=>{if(!this.on)return;const d=e.inputBuffer.getChannelData(0);this.bufs.push(new Float32Array(d));
+      let q=0;for(let i=0;i<d.length;i+=4)q+=d[i]*d[i];const rms=Math.sqrt(q/(d.length/4));this.level=this.level?this.level*.6+rms*.4:rms};
+    this.src.connect(this.proc);this.proc.connect(this.ctx.destination);this.on=true;this.level=0;if(!meterOn)requestAnimationFrame(meterLoop);
   },
   async stop(){
     if(!this.ctx)return null;this.on=false;
@@ -878,7 +1051,7 @@ async function toggleRec(btn,onDone,maxS=60){
   const cur=()=>(recBtnId&&document.getElementById(recBtnId))||btn;
   const upd=()=>{const b=cur(),s=Math.floor((Date.now()-t0)/1000);
     if(b!==btn){b.onclick=()=>toggleRec(b,recDone,recMax);btn=b}
-    b.classList.add("rec");b.innerHTML=`<span class="dot"></span> Ho finito · ${s}s`;if(s>=maxS)b.click()};
+    b.classList.add("rec");if(!b.querySelector(".rt"))b.innerHTML=METER(5)+' <span class="rt"></span>';b.querySelector(".rt").textContent=`Ho finito · ${s}s`;if(s>=maxS)b.click()};
   upd();recTimer=setInterval(upd,500);
 }
 function speak(t){if(!S.tts||!window.speechSynthesis||!t)return;
@@ -1076,7 +1249,7 @@ function wireGoalToday(){
 function submitCheckin(note){
   const first=!S.goal.checkins.length, w=Math.max(0,goalWeek());
   S.goal.checkins.push({d:today(),score:ci.score,volte:first?null:ci.volte,note,week:w});
-  S.xp+=15;bump();ci={score:null,volte:null};goalErr="";save();
+  gainXP(15);celebrate(false);bump();ci={score:null,volte:null};goalErr="";save();
   toast(first?"Salvato. Tra una settimana vediamo come cambia.":"Grazie. +15 punti.");
   if(!first) reviewWeek(w); else render();
 }
@@ -1169,10 +1342,10 @@ function rOggi(){
   const plan=hasEnergy?S.plan:null;
   const left=plan?plan.items.filter(x=>!x.done):[];
   const mins=left.reduce((a,x)=>a+GAMES[x.g].min,0);
-  app.innerHTML=`<div class="hello"><p class="eyebrow">${new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})}</p><h1>${h<12?"Buongiorno":h<18?"Buon pomeriggio":"Buonasera"}</h1></div>
+  app.innerHTML=`<div class="hero"><div class="hello"><p class="eyebrow">${new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})}</p><h1>${h<12?"Buongiorno":h<18?"Buon pomeriggio":"Buonasera"}</h1></div>${WAVE_HTML}</div>
   ${goalTodayHTML()}
   ${minuteHTML()}
-  <div class="card"><div class="row between"><div class="row" style="gap:8px;align-items:baseline"><span class="big">${streak()}</span><span class="muted">${streak()===1?"giorno":"giorni"} di fila</span></div><span class="tag">Livello ${lvl}</span></div>
+  <div class="card"><div class="row between"><div class="row" style="gap:8px;align-items:baseline">${FLAME_SVG(streak()>0)}<span class="big">${streak()}</span><span class="muted">${streak()===1?"giorno":"giorni"} di fila</span></div><span class="tag">Livello ${lvl}</span></div>
   <div class="bar" aria-label="${inLvl} punti su 100"><i style="width:${inLvl}%"></i></div><p class="small muted">${100-inLvl} punti al livello ${lvl+1}</p></div>
   ${!hasEnergy?`<div class="card"><h2>Hai più tempo?</h2><p class="small muted">Dimmi come ti senti e ti preparo un percorso più lungo.</p>
     <div class="energy"><button data-e="stanco">Stanco<span>2 giochi</span></button><button data-e="normale">Normale<span>3 giochi</span></button><button data-e="carico">Carico<span>4 giochi</span></button></div></div>`
@@ -1195,7 +1368,7 @@ function rOggi(){
   const mn=app.querySelector("#min");if(mn)mn.onclick=()=>play("minuto",null);
   const ex=app.querySelector("#extra");if(ex)ex.onclick=()=>{S.plan=makePlan(2,true);save();play(S.plan.items[0].g,0)};
   app.querySelectorAll("[data-after]").forEach(b=>b.onclick=()=>play(b.dataset.after,null));
-  const mi=app.querySelector("#mis");if(mi)mi.onclick=()=>{S.mission.done=true;S.xp+=20;bump();save();toast("+20 punti. Questa vale doppio: è la vita vera.");render()};
+  const mi=app.querySelector("#mis");if(mi)mi.onclick=()=>{S.mission.done=true;gainXP(20);celebrate(false);bump();save();toast("+20 punti. Questa vale doppio: è la vita vera.");render()};
   const m2=app.querySelector("#mis2");if(m2)m2.onclick=()=>{const pool=MISSIONI.concat(S.extra.missioni).filter(x=>x!==S.mission.text);S.mission={d:t,text:pick(pool),done:false,n:(S.mission.n||1)+1};save();render()};
   const tp=app.querySelector("#tip");if(tp){
     if(sampleChecked&&!sample)tp.hidden=true;
@@ -1335,7 +1508,7 @@ function goalProgHTML(){
   if(!S.goal||!S.goal.checkins.length) return `<div class="card"><h2>Nella vita vera</h2><p class="small muted">Qui vedrai come cambia, settimana dopo settimana, la facilità a parlare italiano con le persone. ${S.goal?"Il primo dato arriva dal controllo in Oggi.":"Prima scrivi il tuo obiettivo nel Cervello."}</p></div>`;
   const c=S.goal.checkins.slice(-8), first=S.goal.checkins[0].score, last=c[c.length-1].score, diff=last-first;
   return `<div class="card"><h2>Nella vita vera</h2><p class="muted small">Quanto ti viene facile parlare italiano con le persone, da 1 a 5</p>
-    <div class="bars" style="grid-template-columns:repeat(${c.length},1fr);height:120px" role="img" aria-label="Facilità a parlare, ultime ${c.length} settimane">${c.map((x,i)=>`<div class="${i===c.length-1?"today":""}" style="height:${x.score/5*100}%"></div>`).join("")}</div>
+    <div class="bars" style="grid-template-columns:repeat(${c.length},1fr);height:120px" role="img" aria-label="Facilità a parlare, ultime ${c.length} settimane">${c.map((x,i)=>`<div class="${i===c.length-1?"today":""}" style="height:${x.score/5*100}%;animation-delay:${i*60}ms"></div>`).join("")}</div>
     <div class="blabels" style="grid-template-columns:repeat(${c.length},1fr)">${c.map(x=>`<span>${x.week===0&&x===S.goal.checkins[0]?"Inizio":"Sett. "+x.week}</span>`).join("")}</div>
     <p>${S.goal.checkins.length<2?"Questo è il tuo punto di partenza.":diff>0?`Da quando hai iniziato sei salito di ${diff} ${diff===1?"punto":"punti"}.`:diff<0?"Ultimamente è più dura. Il Cervello ha adattato il percorso.":"Sei stabile rispetto all'inizio. I cambiamenti veri richiedono qualche settimana."}</p></div>`;
 }
@@ -1347,7 +1520,7 @@ function rProg(){
   <div class="stats"><div class="stat"><b>${Math.floor(S.xp/100)+1}</b><span>livello (${S.xp} punti)</span></div><div class="stat"><b>${S.speak.lvl}/5</b><span>lettura a voce</span></div><div class="stat"><b>${S.mem.best}</b><span>sequenza più lunga</span></div></div>
   ${goalProgHTML()}
   <div class="card"><h2>Ultimi 14 giorni</h2><p class="muted small">Attività completate ogni giorno</p>
-    <div class="bars" role="img" aria-label="Attività negli ultimi 14 giorni">${vals.map((v,i)=>`<div class="${v?"":"zero"} ${i===13?"today":""}" style="height:${v?Math.max(8,v/mx*100):2}%"></div>`).join("")}</div>
+    <div class="bars" role="img" aria-label="Attività negli ultimi 14 giorni">${vals.map((v,i)=>`<div class="${v?"":"zero"} ${i===13?"today":""}" style="height:${v?Math.max(8,v/mx*100):2}%;animation-delay:${i*35}ms"></div>`).join("")}</div>
     <div class="blabels">${days.map(d=>`<span>${+d.slice(8)}</span>`).join("")}</div></div>
   <div class="card"><h2>Cosa ha capito l'app di te</h2>
     <p>${tot?`Hai completato ${tot} ${tot===1?"gioco":"giochi"}.`:"Ancora nessun gioco: inizia da Oggi."}</p>
