@@ -1,0 +1,1195 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2c6b5a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Voce Chiara">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/icon-192.png">
+<title>Voce Chiara</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap">
+<style>
+/* Layout: app a una colonna per iPhone, schede brevi, barra in basso con 5 sezioni */
+:root{
+  --bg:#edf1ef; --surface:#f8faf9; --line:#d3dcd8; --fg:#1d2a2c; --muted:#5b6a6c;
+  --accent:#2c6b5a; --accent-soft:#d6e8e1; --warm:#c9821f; --warm-soft:#f6e6cc; --bad:#b0483b;
+  --ff:"Lexend", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#131a19; --surface:#1b2422; --line:#2c3a37; --fg:#e2eae7; --muted:#9aaba7;
+  --accent:#6dc0a5; --accent-soft:#1f3a33; --warm:#e8ac55; --warm-soft:#3a2d18; --bad:#e58475; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#131a19; --surface:#1b2422; --line:#2c3a37; --fg:#e2eae7; --muted:#9aaba7;
+  --accent:#6dc0a5; --accent-soft:#1f3a33; --warm:#e8ac55; --warm-soft:#3a2d18; --bad:#e58475; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--ff);font-size:17px;line-height:1.6;letter-spacing:.01em;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:18px calc(96px + env(safe-area-inset-bottom,0px))}
+main{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{margin:0;line-height:1.25;text-wrap:balance;font-weight:600}
+h1{font-size:1.6rem}
+h2{font-size:1.2rem}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+.eyebrow{font-size:.75rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:500}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.between{justify-content:space-between}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{border:0;border-radius:12px;padding:14px 18px;font-weight:600;background:var(--accent);color:var(--surface);min-height:52px;font-size:1rem}
+.btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+.btn.soft{background:var(--accent-soft);color:var(--fg)}
+.btn.wide{width:100%}
+.btn.sm{min-height:40px;padding:8px 12px;font-size:.88rem}
+.btn:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+input,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;width:100%}
+textarea{min-height:90px;resize:vertical}
+label{font-weight:500;font-size:.95rem}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(5,1fr);
+  padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+nav.tabs button{background:none;border:0;padding:8px 2px;border-radius:10px;font-size:.74rem;font-weight:500;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px}
+nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
+
+.hello{display:flex;flex-direction:column;gap:4px;padding-top:4px}
+.big{font-size:2.2rem;font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums;line-height:1}
+.bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:5px;transition:width .4s}
+.energy{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.energy button{border:1.5px solid var(--line);background:var(--bg);border-radius:12px;padding:12px 4px;font-weight:600;display:flex;flex-direction:column;gap:2px;align-items:center}
+.energy button span{font-size:.75rem;font-weight:400;color:var(--muted)}
+.plan{display:flex;flex-direction:column;gap:8px}
+.pitem{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.pitem:first-child{border-top:0}
+.tick{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:.8rem;font-weight:700;color:var(--surface)}
+.pitem.done .tick{background:var(--accent);border-color:var(--accent)}
+.pitem.done .pn{color:var(--muted);text-decoration:line-through}
+.pn{font-weight:600}
+.tag{display:inline-block;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.tag.w{background:var(--warm-soft);color:var(--warm)}
+.note{background:var(--warm-soft);border-radius:14px;padding:14px 16px;font-size:.95rem}
+.brain{border-color:var(--accent);border-width:1.5px}
+
+.playbar{display:flex;flex-direction:column;gap:8px}
+.playbar .row{justify-content:space-between}
+.sentence{font-size:1.5rem;line-height:1.75;font-weight:500;display:flex;flex-wrap:wrap;gap:4px 14px;min-height:4.5em;align-content:flex-start}
+.chunk{transition:opacity .25s, background .25s;border-radius:8px;padding:0 6px;margin:0 -6px}
+.chunk.off{opacity:.13}
+.chunk.cur{background:var(--warm-soft)}
+.sep{color:var(--warm);font-weight:300}
+.rate{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rate button{border-radius:12px;border:1.5px solid var(--line);background:var(--bg);padding:12px 4px;font-weight:600;min-height:56px}
+.rate button[data-r="2"]{border-color:var(--accent)}
+.rate button[data-r="0"]{border-color:var(--warm)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.scaffold{display:flex;flex-direction:column;gap:8px}
+.scaffold div{background:var(--bg);border-radius:10px;padding:10px 14px;font-size:1.08rem}
+.scaffold div b{color:var(--accent)}
+.clues{display:flex;flex-direction:column;gap:8px;counter-reset:c}
+.clues div{background:var(--bg);border-radius:10px;padding:10px 14px;font-size:1.08rem;animation:in .3s ease}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.word{font-size:2.2rem;font-weight:600;text-align:center;color:var(--accent);padding:6px 0}
+.forbid{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.forbid span{background:var(--warm-soft);color:var(--warm);padding:4px 12px;border-radius:8px;font-weight:600;text-decoration:line-through}
+.timer{font-size:3rem;font-weight:600;text-align:center;font-variant-numeric:tabular-nums;color:var(--accent)}
+.timer.low{color:var(--warm)}
+.steps{display:flex;gap:5px}
+.steps i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.steps i.on{background:var(--accent)}
+.flash{font-size:2.6rem;font-weight:600;text-align:center;min-height:2.2em;display:grid;place-items:center}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.tiles button{border:1.5px solid var(--line);background:var(--bg);border-radius:12px;padding:14px 6px;font-weight:500;font-size:1.05rem;min-height:54px}
+.tiles button.used{opacity:.3}
+.answer{display:flex;flex-wrap:wrap;gap:8px;min-height:44px;padding:10px;border:1.5px dashed var(--line);border-radius:12px}
+.answer span{background:var(--accent-soft);padding:4px 10px;border-radius:8px;font-weight:500}
+.dots{display:flex;gap:6px;justify-content:center}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--accent)}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border-radius:12px;padding:4px;gap:4px}
+.seg button{border:0;background:none;padding:10px;border-radius:9px;font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.ok{color:var(--accent);font-weight:600}
+.no{color:var(--bad);font-weight:600}
+.toggle{display:flex;align-items:center;gap:10px;font-size:.95rem}
+.toggle input{width:22px;height:22px;accent-color:var(--accent)}
+
+.ggrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:6px;min-width:0}
+.gcard b{font-size:1rem}
+.gcard span{font-size:.82rem;color:var(--muted);line-height:1.4}
+
+details{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 18px}
+summary{font-weight:600;cursor:pointer}
+details ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+
+.result .it{font-size:1.35rem;font-weight:500;line-height:1.6}
+.pair{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;font-size:.95rem}
+.pair span:nth-child(2){color:var(--warm)}
+.dict{display:flex;flex-direction:column;gap:8px}
+.dict .item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start;border-top:1px solid var(--line);padding-top:10px}
+.dict .d{color:var(--muted);font-size:.86rem}
+.x{background:none;border:0;color:var(--muted);padding:6px 10px;font-size:.85rem}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips button{border:1.5px solid var(--line);background:var(--bg);border-radius:999px;padding:7px 13px;font-size:.86rem}
+.chat{display:flex;flex-direction:column;gap:10px}
+.msg{padding:12px 14px;border-radius:14px;max-width:90%;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:var(--accent);color:var(--surface);border-bottom-right-radius:4px}
+.msg.ai{align-self:flex-start;background:var(--bg);border-bottom-left-radius:4px}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--bg);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px}
+.stat b{font-size:1.45rem;font-weight:600;font-variant-numeric:tabular-nums}
+.stat span{font-size:.76rem;color:var(--muted);line-height:1.3}
+.bars{display:grid;grid-template-columns:repeat(14,1fr);gap:4px;align-items:end;height:110px;border-bottom:1px solid var(--line)}
+.bars div{background:var(--accent);border-radius:4px 4px 0 0;min-height:2px}
+.bars div.zero{background:var(--line)}
+.bars div.today{background:var(--warm)}
+.blabels{display:grid;grid-template-columns:repeat(14,1fr);gap:4px;font-size:.66rem;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.92rem;z-index:30;max-width:calc(100% - 32px);animation:in .25s ease}
+.spin{display:inline-block;width:18px;height:18px;border:2.5px solid var(--accent-soft);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-3px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+.btn.mic{background:var(--warm);color:var(--surface);display:flex;align-items:center;justify-content:center;gap:10px;min-height:62px;font-size:1.08rem}
+.btn.mic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.btn.mic.rec{background:var(--bad);animation:pulse 1.2s ease-in-out infinite}
+.btn.mic .dot{width:12px;height:12px;border-radius:50%;background:currentColor}
+@keyframes pulse{50%{opacity:.72}}
+.heard{background:var(--bg);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.login{min-height:70vh;display:flex;flex-direction:column;justify-content:center;gap:18px}
+</style>
+</head>
+<body>
+
+<main id="app"></main>
+<div id="toast" class="toast" hidden></div>
+
+<nav class="tabs" aria-label="Sezioni">
+  <button data-tab="oggi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>Oggi</button>
+  <button data-tab="giochi"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Giochi</button>
+  <button data-tab="dial"><svg viewBox="0 0 24 24"><path d="M4 7h9M8.5 4v3M6 7c.5 3 3 6 6 7M11 7c-.5 3-3 6-6 7M13 20l4-9 4 9M14.5 17h5"/></svg>Dialetto</button>
+  <button data-tab="cervello"><svg viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a2 2 0 0 0-3-1zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/></svg>Cervello</button>
+  <button data-tab="prog"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progressi</button>
+</nav>
+
+<script>
+/* ================= CONTENUTI ================= */
+const FRASI={
+  1:["Ciao, / come stai?","Vorrei un caffè, / per favore.","Ci vediamo / domani mattina.","Scusa, / non ho capito.","Oggi fa / molto freddo.","Mi passi / il telefono?","Arrivo / tra cinque minuti.","Grazie / per l'aiuto."],
+  2:["Domani pomeriggio / vado in centro / con i miei amici.","Ho dimenticato le chiavi / sul tavolo / della cucina.","Puoi ripetere / più piano, / per favore?","Stasera mangiamo la pizza / tutti insieme.","Ti chiamo / appena finisco / di lavorare.","Questa settimana / sono stato / molto impegnato."],
+  3:["Volevo chiederti / se domani sei libero, / perché avrei bisogno / di una mano.","Non sono sicuro / di aver capito bene, / me lo puoi spiegare / un'altra volta?","Ieri sera / sono uscito con degli amici / e siamo tornati tardi.","Secondo me / è una buona idea, / però dobbiamo / organizzarci meglio."],
+  4:["Quando ho finito la scuola / ho capito / che mi piace lavorare / con le mani e con la testa.","Se avessi più tempo, / mi piacerebbe imparare / a suonare uno strumento.","Ti spiego in breve: / prima prepariamo tutto, / poi chiamiamo gli altri / e alla fine controlliamo."],
+  5:["Anche se all'inizio / ero un po' agitato, / alla fine sono riuscito / a spiegare le mie idee / con calma.","Vorrei proporvi un'idea: / se ci dividiamo i compiti, / riusciamo a finire prima / e con meno stress.","Il motivo per cui / ho scelto questo progetto / è che mi permette / di unire / due cose che mi piacciono."]
+};
+const RACCONTI=[
+  {t:"Cosa hai fatto ieri?",s:["Prima…","Poi…","Alla fine…"]},
+  {t:"Spiega a un amico come si prepara un piatto che ti piace.",s:["Per prima cosa…","Dopo…","Alla fine…"]},
+  {t:"Descrivi il posto dove vivi a chi non c'è mai stato.",s:["Il mio paese è…","La cosa più bella è…","Se vieni, ti consiglio…"]},
+  {t:"Parla di un progetto a cui stai lavorando.",s:["Il progetto è…","Serve a…","Adesso sto…"]},
+  {t:"Racconta una cosa bella di questa settimana.",s:["Questa settimana…","Mi è piaciuto perché…","La prossima volta…"]},
+  {t:"Convinci un amico a fare una cosa con te.",s:["Ti propongo di…","Secondo me è bello perché…","Allora, che ne dici?"]}
+];
+const INDOVINA=[
+  {w:"ombrello",c:["È un oggetto.","Lo usi fuori casa.","Serve quando il tempo è brutto.","Si apre e si chiude.","Ti ripara dalla pioggia."]},
+  {w:"castagna",c:["È un cibo.","Si trova nel bosco.","Si mangia in autunno.","Ha un guscio con le spine.","Si cuoce sul fuoco o in padella."]},
+  {w:"frigorifero",c:["È un elettrodomestico.","Sta in cucina.","Dentro è freddo.","Ha uno sportello.","Ci metti il latte e la carne."]},
+  {w:"chiave",c:["È un oggetto piccolo.","Di solito è di metallo.","La porti in tasca.","Si usa con una serratura.","Apre la porta di casa."]},
+  {w:"bicicletta",c:["È un mezzo di trasporto.","Non ha il motore.","Ha due ruote.","Si muove con i pedali.","Ha il manubrio."]},
+  {w:"farmacia",c:["È un negozio.","Fuori c'è una croce verde.","Chi ci lavora ha il camice.","Ci vai quando stai male.","Ci compri le medicine."]},
+  {w:"cuffie",c:["È un oggetto tecnologico.","Si collegano al telefono.","Le metti sulla testa o nelle orecchie.","Servono per ascoltare.","Senti la musica senza disturbare."]},
+  {w:"forbici",c:["È un attrezzo.","Ha due lame.","Ha due buchi per le dita.","Si usa per tagliare.","Tagli la carta o i capelli."]},
+  {w:"tramonto",c:["Succede ogni giorno.","Lo vedi nel cielo.","Il cielo diventa arancione.","Succede di sera.","Il sole scende dietro l'orizzonte."]},
+  {w:"piazza",c:["È un luogo.","Sta in centro al paese.","È all'aperto.","Ci si incontra con gli amici.","Ci fanno le feste e le sagre."]},
+  {w:"zaino",c:["È un oggetto.","Ha delle cerniere.","Lo porti sulle spalle.","Ci metti dentro le cose.","Lo usi a scuola o in gita."]},
+  {w:"caricabatterie",c:["È un oggetto tecnologico.","Ha un filo.","Si attacca alla presa.","Lo usi quasi ogni giorno.","Serve quando il telefono è scarico."]}
+];
+const SPIEGA=[
+  {w:"pizza",no:["mangiare","forno"]},{w:"telefono",no:["chiamare","schermo"]},{w:"inverno",no:["freddo","neve"]},
+  {w:"calcio",no:["pallone","squadra"]},{w:"festa",no:["musica","ballare"]},{w:"scuola",no:["professore","studiare"]},
+  {w:"montagna",no:["alta","neve"]},{w:"videogioco",no:["giocare","console"]},{w:"mare",no:["acqua","spiaggia"]},
+  {w:"compleanno",no:["torta","anni"]},{w:"bosco",no:["alberi","foglie"]},{w:"trattore",no:["campo","ruote"]}
+];
+const RAGNATELA=["È un… (a che gruppo appartiene?)","Dove si trova di solito?","A cosa serve? Cosa ci fai?","Com'è fatto? Colore, forma, materiale.","Cosa ti fa venire in mente?","Ora dì una frase intera che contiene la parola."];
+const MISSIONI=["Quando ordini qualcosa oggi, dillo in italiano con una frase intera.","Racconta a qualcuno, in italiano, una cosa che hai fatto oggi.","Usa una frase salvagente almeno una volta in una conversazione.","Fai una domanda in italiano a una persona che non conosci bene.","Leggi a voce alta un messaggio che hai ricevuto, prima di rispondere.","Spiega a qualcuno un tuo progetto in 3 frasi, in italiano.","Al telefono, prova a dire tutto in italiano per almeno un minuto."];
+const SALVAGENTE=["Aspetta, ci penso un attimo.","Come si dice… ah, ecco.","Te lo dico in un altro modo.","Ricomincio da capo: …","In pratica, voglio dire che…","Non mi viene la parola, è quella cosa che…"];
+const PAROLE="casa mela treno sedia gatto libro pane lago chiave fiore ponte sole tazza borsa latte nave cane porta vaso neve bosco piatto letto vento sale foglia scarpa lampada uovo castagna campana finestra strada nuvola zaino".split(" ");
+const BOX_DAYS=[1,3,7,14,30];
+
+/* ================= STATO ================= */
+const KEY="voce-chiara-v1";
+const blank=()=>({v:2,updatedAt:0,xp:0,speak:{lvl:1,ups:0,log:[]},mem:{span:3,ok:0,best:3,mode:"parole",log:[]},games:[],dict:[],
+  extra:{frasi:[],indovina:[],spiega:[],missioni:[]},days:{},chunky:true,dialetto:"",interessi:"",energy:null,plan:null,mission:null,tip:null,chat:[],tts:true});
+function migrate(o){
+  const s=Object.assign(blank(),o);
+  if(Array.isArray(s.extra)) s.extra={frasi:s.extra,indovina:[],spiega:[],missioni:[]};
+  s.extra=Object.assign({frasi:[],indovina:[],spiega:[],missioni:[]},s.extra);
+  if(o&&o.tell&&o.tell.log&&!o.games) s.games=o.tell.log.map(x=>({d:x.d,g:"racconta",r:x.r}));
+  s.dict.forEach(x=>{if(x.box==null){x.box=0;x.due=today()}});
+  s.v=2; return s;
+}
+const iso=d=>{const z=new Date(d);return z.getFullYear()+"-"+String(z.getMonth()+1).padStart(2,"0")+"-"+String(z.getDate()).padStart(2,"0")};
+const today=()=>iso(Date.now());
+const addDays=n=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
+let S=blank();
+try{const raw=localStorage.getItem(KEY); if(raw) S=migrate(JSON.parse(raw));}catch(e){}
+function save(){
+  S.updatedAt=Date.now();
+  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+  pushState();
+}
+const cap=(a,n=300)=>{while(a.length>n)a.shift()};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function bump(){S.days[today()]=(S.days[today()]||0)+1}
+/* serie che perdona un giorno saltato: si interrompe solo con 2 giorni vuoti di fila */
+function streak(){let n=0,miss=0,d=new Date();if(!S.days[iso(d)])d.setDate(d.getDate()-1);
+  for(let i=0;i<400;i++){if(S.days[iso(d)]){n++;miss=0}else{miss++;if(miss>=2)break}d.setDate(d.getDate()-1)}return n}
+function toast(t){const el=document.getElementById("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600)}
+
+/* ================= SERVER: AI (Gemini) + SALVATAGGIO ================= */
+let CODE="";try{CODE=localStorage.getItem("vc-code")||""}catch(e){}
+let sample=null,sampleChecked=false,aiReady=false,syncT=null;
+async function api(path,opts={}){
+  const r=await fetch(path,Object.assign({},opts,{headers:{"content-type":"application/json","x-code":CODE}}));
+  let d={};try{d=await r.json()}catch(e){}
+  if(!r.ok)throw {code:d.code||("http_"+r.status),message:d.message||""};
+  return d;
+}
+function makeSample(){
+  const call=(input,opts,json)=>api("/api/ai",{method:"POST",body:JSON.stringify({input,json,audio:(opts&&opts.audio)||null})});
+  const f=async(input,opts={})=>{const d=await call(input,opts,false);const text=String(d.text||"");if(opts.onText)opts.onText({text,delta:text});return {text,truncated:false}};
+  f.json=async(input,opts={})=>{const d=await call(input,opts,true);if(d.json==null)throw {code:"bad_json"};return d.json};
+  return f;
+}
+function pushState(){clearTimeout(syncT);syncT=setTimeout(()=>{if(!CODE)return;api("/api/state",{method:"PUT",body:JSON.stringify({json:JSON.stringify(S),updatedAt:S.updatedAt})}).catch(()=>{})},1200)}
+async function boot(){
+  try{const st=await api("/api/ai");aiReady=!!st.ready}catch(e){aiReady=false}
+  sample=aiReady?makeSample():null;sampleChecked=true;
+  try{const d=await api("/api/state");
+    if(d&&d.json&&(d.updatedAt||0)>(S.updatedAt||0)){S=migrate(JSON.parse(d.json));try{localStorage.setItem(KEY,d.json)}catch(e){}}
+    else if(S.updatedAt)pushState();
+  }catch(e){if(e&&e.code==="bad_code"){try{localStorage.removeItem("vc-code")}catch(_){}CODE="";return renderLogin("Il codice non è più valido. Inseriscilo di nuovo.")}}
+  if(tab!=="play")render();
+}
+function renderLogin(err){
+  document.querySelector("nav.tabs").hidden=true;
+  app.innerHTML=`<div class="login"><div class="hello"><p class="eyebrow">Voce Chiara</p><h1>Ciao! Inserisci il tuo codice</h1></div>
+  <div class="card"><label for="code">Codice personale</label><input id="code" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="es. faggio-1234">
+  <button class="btn wide" id="enter">Entra</button>${err?`<p class="no small">${esc(err)}</p>`:""}
+  <p class="small muted">Lo inserisci solo la prima volta. Serve a proteggere il tuo Cervello e i tuoi progressi.</p></div></div>`;
+  const go_=async()=>{const v=app.querySelector("#code").value.trim().toLowerCase();if(!v)return;CODE=v;
+    try{await api("/api/state");try{localStorage.setItem("vc-code",v)}catch(e){}document.querySelector("nav.tabs").hidden=false;render();boot()}
+    catch(e){CODE="";renderLogin(e&&e.code==="bad_code"?"Codice sbagliato. Controlla e riprova.":"Non riesco a collegarmi. Controlla internet e riprova.")}};
+  app.querySelector("#enter").onclick=go_;
+  app.querySelector("#code").onkeydown=e=>{if(e.key==="Enter")go_()};
+}
+function noClaudeMsg(e){const c=e&&e.code;
+  return c==="bad_code"?"Il codice personale non è giusto.":c==="no_key"?"Il Cervello non è ancora collegato: manca la chiave Gemini.":c==="rate_limited"?"Troppe richieste di fila. Aspetta un minuto e riprova.":c==="mic"?"Non riesco a usare il microfono. Controlla il permesso: Impostazioni > Safari > Microfono.":c==="audio_too_big"?"La registrazione è troppo lunga. Prova con una più corta.":"Il Cervello non risponde. Controlla internet e riprova."}
+function ctx(){
+  const g=prefs();
+  return `Profilo: ragazzo di 18 anni con DSA. In testa parla bene in italiano, ma a voce con altre persone le parole gli si mischiano; in dialetto${S.dialetto?" ("+S.dialetto+")":""} gli viene più facile. Si annoia facilmente.
+Interessi: ${S.interessi||"non indicati"}.
+Livello lettura a voce: ${S.speak.lvl}/5. Memoria: sequenze da ${S.mem.span}. Giorni di fila: ${streak()}. Energia oggi: ${S.energy&&S.energy.d===today()?S.energy.v:"non indicata"}.
+Giochi che gli piacciono di più: ${g.liked.join(", ")||"ancora pochi dati"}. Giochi che lo annoiano: ${g.bored.join(", ")||"nessuno"}.${S.goal?`
+Il suo obiettivo: "${S.goal.text}"${S.goal.why?" (perché: "+S.goal.why+")":""}. Settimana ${goalWeek()+1} di ${S.goal.steps.length}${curStep()?": "+curStep().titolo:""}.
+Facilità a parlare italiano con le persone (1-5), nelle ultime rilevazioni: ${S.goal.checkins.slice(-4).map(c=>c.score).join(", ")||"nessuna"}.`:""}`;
+}
+
+/* ================= GIOCHI: METADATI ================= */
+const GAMES={
+  leggi:{n:"Leggi a pezzi",cat:"parlare",d:"3 frasi a voce alta, un pezzo alla volta",min:3,easy:true},
+  racconta:{n:"Racconta",cat:"parlare",d:"Parli senza leggere, con una traccia di 3 frasi",min:2},
+  spiega:{n:"Spiega senza dire",cat:"parlare",d:"Spieghi una parola a voce senza usare le parole vietate",min:2},
+  indovina:{n:"Indovina la parola",cat:"parole",d:"Arrivano gli indizi uno alla volta: dì la parola ad alta voce",min:2,easy:true},
+  ragnatela:{n:"Ragnatela",cat:"parole",d:"Costruisci la rete di una parola: così la trovi più in fretta quando parli",min:3},
+  sequenze:{n:"Sequenze",cat:"memoria",d:"Guarda, ricorda, rimetti in ordine",min:3,easy:true},
+  ripasso:{n:"Ripasso",cat:"ripasso",d:"Le tue frasi e le domande di studio, nel momento giusto per non dimenticarle",min:2},
+  conversazione:{n:"Conversazione",cat:"dialogo",d:"Una scena vera: il Cervello fa l'altra persona e ti ascolta",min:5,ai:true},
+  studia:{n:"Studia un argomento",cat:"studio",d:"Scrivi cosa devi imparare: punti chiave e domande",min:6,ai:true},
+  minuto:{n:"1 minuto",cat:"mini",d:"Una cosa sola, piccola",min:1,hidden:true},
+  voce:{n:"A voce con Claude",cat:"dialogo",d:"Conversazione vocale nell'app Claude",min:5,hidden:true}
+};
+const ANCORE=["bevo il caffè","mi siedo sul bus o in macchina","finisco di pranzare","mi metto a letto","apro Instagram"];
+const SCENE=["Ordinare al bar","Prenotare un tavolo al telefono","Colloquio per un lavoro","Spiegare un tuo progetto a un amico","Chiedere informazioni in un negozio","Presentarti a una persona nuova"];
+/* ================= OBIETTIVO: percorso di 4 settimane ================= */
+const FOCUS={parlare:"Parlare a voce",parole:"Trovare le parole",memoria:"Memoria",dialogo:"Conversazioni",studio:"Studio"};
+const DEFAULT_PATH=[
+  {titolo:"Frasi brevi, a voce alta",focus:"parlare",scena:"Ordinare al bar",missione:"Ordina qualcosa in italiano, con una frase intera.",perche:"Prima si allena la strada tra la testa e la voce, con frasi corte e senza fretta."},
+  {titolo:"Trovare le parole",focus:"parole",scena:"Chiedere informazioni in un negozio",missione:"Quando una parola non ti viene, descrivila in italiano invece di passare al dialetto.",perche:"Quando una parola sparisce, saperla descrivere ti fa andare avanti senza bloccarti."},
+  {titolo:"Raccontare",focus:"parlare",scena:"Spiegare un tuo progetto a un amico",missione:"Racconta in italiano a qualcuno cosa hai fatto ieri, in 3 frasi.",perche:"Raccontare senza testo davanti è la cosa più vicina a parlare davvero con le persone."},
+  {titolo:"Conversazioni vere",focus:"dialogo",scena:"Presentarti a una persona nuova",missione:"Fai una conversazione di almeno 2 minuti tutta in italiano.",perche:"Ora si porta tutto fuori: scambi veri, con qualcuno che risponde."}
+];
+const SCALA=["Molto difficile","Difficile","Così così","Abbastanza facile","Facile"];
+const VOLTE=["Mai","1-2 volte","3-5 volte","Quasi ogni giorno"];
+const daysBetween=(a,b)=>Math.round((Date.parse(b)-Date.parse(a))/864e5);
+function goalWeek(){if(!S.goal)return -1;return Math.floor(daysBetween(S.goal.start,today())/7)}
+function curStep(){const w=goalWeek();return S.goal&&w>=0&&w<S.goal.steps.length?S.goal.steps[w]:null}
+function checkinDue(){if(!S.goal)return false;const c=S.goal.checkins;if(!c.length)return true;return daysBetween(c[c.length-1].d,today())>=7}
+function cleanStep(x,i){const d=DEFAULT_PATH[Math.min(i,3)];x=x||{};
+  return {titolo:String(x.titolo||d.titolo).slice(0,60),focus:FOCUS[x.focus]?x.focus:d.focus,scena:String(x.scena||d.scena).slice(0,90),missione:String(x.missione||d.missione).slice(0,200),perche:String(x.perche||d.perche).slice(0,220)}}
+function weekStats(w){
+  if(!S.goal)return {};const s=iso(Date.parse(S.goal.start)+w*7*864e5),e=iso(Date.parse(S.goal.start)+(w+1)*7*864e5);
+  const g=S.games.filter(x=>x.d>=s&&x.d<e);const days=Object.keys(S.days).filter(d=>d>=s&&d<e).length;
+  const byCat={};g.filter(x=>!x.b).forEach(x=>{const c=GAMES[x.g]?GAMES[x.g].cat:"?";byCat[c]=(byCat[c]||0)+1});
+  return {giorni_attivi:days,giochi:g.filter(x=>!x.b).length,annoiato:g.filter(x=>x.b).length,per_tipo:byCat,difficili:g.filter(x=>x.r===0).length,facili:g.filter(x=>x.r===2).length};
+}
+function dueCards(){return S.dict.filter(x=>(x.due||today())<=today())}
+function prefs(){
+  const rec=S.games.slice(-80), cnt={},bor={};
+  rec.filter(x=>!(GAMES[x.g]&&GAMES[x.g].hidden)).forEach(x=>{if(x.b)bor[x.g]=(bor[x.g]||0)+1;else if(x.r!=null)cnt[x.g]=(cnt[x.g]||0)+1});
+  const name=k=>GAMES[k]?GAMES[k].n:k;
+  return {liked:Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,3).map(name),bored:Object.keys(bor).filter(k=>bor[k]>=2).map(name),bor,cnt};
+}
+function weight(g){
+  const p=prefs(); let w=1/(1+1.5*(p.bor[g]||0));
+  if(S.games.some(x=>x.d===today()&&x.g===g&&!x.b)) w*=.4;
+  if(S.energy&&S.energy.d===today()&&S.energy.v==="stanco"&&GAMES[g].easy) w*=2;
+  const st=curStep(); if(st){ if(GAMES[g].cat===st.focus) w*=2.5; else if(st.focus==="dialogo"&&GAMES[g].cat==="parlare") w*=1.5; }
+  return w;
+}
+function wpick(list){const ws=list.map(weight),t=ws.reduce((a,b)=>a+b,0);let r=Math.random()*t;for(let i=0;i<list.length;i++){r-=ws[i];if(r<=0)return list[i]}return list[list.length-1]}
+function makePlan(n,extra){
+  const items=[]; const avail=Object.keys(GAMES).filter(g=>g!=="ripasso"&&!GAMES[g].hidden&&(!GAMES[g].ai||(extra&&sample)));
+  if(!extra&&dueCards().length) items.push("ripasso");
+  if(extra&&sample) items.push(Math.random()<.5?"conversazione":"studia");
+  while(items.length<n){
+    const lastCat=items.length?GAMES[items[items.length-1]].cat:null;
+    const opts=avail.filter(g=>GAMES[g].cat!==lastCat&&!items.includes(g));
+    items.push(wpick(opts.length?opts:avail));
+  }
+  return {d:today(),extra:!!extra,items:items.map(g=>({g,done:false}))};
+}
+const usable=g=>g!=="ripasso"&&!GAMES[g].hidden&&(!GAMES[g].ai||!!sample);
+function swapItem(i){
+  const it=S.plan.items[i], others=S.plan.items.map(x=>x.g);
+  const opts=Object.keys(GAMES).filter(g=>usable(g)&&!others.includes(g)&&GAMES[g].cat!==GAMES[it.g].cat);
+  it.g=wpick(opts.length?opts:Object.keys(GAMES).filter(g=>usable(g)&&g!==it.g)); save();
+}
+
+/* ================= NAVIGAZIONE ================= */
+let tab="oggi", run=null, gs=null, timer=null;
+try{const h=location.hash.slice(1);if(["oggi","giochi","dial","cervello","prog"].includes(h))tab=h}catch(e){}
+document.querySelector("nav.tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(b)go(b.dataset.tab)});
+function clearTimers(){clearTimeout(timer);clearInterval(timer);timer=null}
+function go(t){clearTimers();abortRec();stopSpeak();run=null;gs=null;tab=t;render();window.scrollTo(0,0)}
+const app=document.getElementById("app");
+function render(){
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===tab?"page":"false"));
+  if(tab==="play") return rPlay();
+  ({oggi:rOggi,giochi:rGiochi,dial:rDial,cervello:rCervello,prog:rProg})[tab]();
+}
+
+/* ================= MOTORE DI GIOCO ================= */
+function play(g,planIdx){clearTimers();abortRec();stopSpeak();run={g,planIdx,t0:Date.now()};gs=null;INIT[g]();tab="play";render();window.scrollTo(0,0)}
+function finish(r){
+  clearTimers();
+  S.games.push({d:today(),g:run.g,r});cap(S.games);
+  const pts=(run.planIdx!=null&&S.plan&&S.plan.extra)?20:10; S.xp+=pts; bump();
+  let planDone=false;
+  if(run.planIdx!=null&&S.plan&&S.plan.d===today()){
+    S.plan.items[run.planIdx].done=true;
+    const next=S.plan.items.findIndex(x=>!x.done);
+    if(next<0){planDone=true;S.xp+=20}
+    save();
+    if(!planDone){toast(`+${pts} punti. Avanti con il prossimo!`);return play(S.plan.items[next].g,next)}
+  } else save();
+  gs={end:true,planDone,r};render();
+}
+function bored(){
+  S.games.push({d:today(),g:run.g,b:1});cap(S.games);
+  let ng;
+  if(run.planIdx!=null&&S.plan&&S.plan.d===today()){swapItem(run.planIdx);ng=S.plan.items[run.planIdx].g}
+  else{const cat=GAMES[run.g].cat;ng=wpick(Object.keys(GAMES).filter(g=>usable(g)&&GAMES[g].cat!==cat))}
+  save();toast("Cambiamo! Prova questo.");play(ng,run.planIdx);
+}
+function head(title,sub){
+  const p=run.planIdx!=null&&S.plan?S.plan.items:null;
+  const done=p?p.filter(x=>x.done).length:0;
+  return `<div class="playbar"><div class="row"><span class="eyebrow">${p?`Gioco ${run.planIdx+1} di ${p.length}`:"Gioco libero"} · ${esc(GAMES[run.g].n)}</span><button class="btn ghost sm" id="quit">Esci</button></div>
+  ${p?`<div class="bar"><i style="width:${done/p.length*100}%"></i></div>`:""}</div>
+  <div class="hello"><h1>${title}</h1>${sub?`<p class="muted">${sub}</p>`:""}</div>`;
+}
+const boredBtn=()=>`<button class="btn ghost wide" id="bored">Mi sto annoiando, cambia gioco</button>`;
+function wire(){
+  const q=app.querySelector("#quit");if(q)q.onclick=()=>{const t=run&&(run.planIdx!=null||run.g==="minuto")?"oggi":"giochi";go(t)};
+  const b=app.querySelector("#bored");if(b)b.onclick=bored;
+}
+function rPlay(){
+  if(gs&&gs.end&&run.g==="minuto"){
+    const st=streak();
+    app.innerHTML=`<div class="hello"><p class="eyebrow">1 minuto</p><h1>Fatto!</h1></div>
+    <div class="card"><div class="row" style="gap:8px;align-items:baseline"><span class="big">${st}</span><span class="muted">${st===1?"giorno":"giorni"} di fila</span></div>
+    <p>Questo minuto conta davvero. Un'abitudine nasce dal ripetere una cosa piccola ogni giorno nello stesso momento, non da quanto fai.</p>
+    <p class="small muted">Se vuoi, continua. Se no, va benissimo così: ci vediamo ${S.anchor?"dopo che "+esc(S.anchor):"domani"}.</p>
+    <div class="two"><button class="btn" id="one">Ancora 1 minuto</button><button class="btn ghost" id="stop">Basta per oggi</button></div></div>`;
+    app.querySelector("#one").onclick=()=>play("minuto",null); app.querySelector("#stop").onclick=()=>go("oggi");
+    return;
+  }
+  if(gs&&gs.end){
+    const msg=gs.planDone?"Hai finito il percorso. +20 punti bonus.":gs.r===0?"Era difficile, e l'hai fatto lo stesso. È così che si migliora.":"Fatto. +10 punti.";
+    app.innerHTML=`<div class="hello"><p class="eyebrow">${esc(GAMES[run.g].n)}</p><h1>${gs.planDone?"Percorso completato":"Bravo"}</h1></div>
+    <div class="card"><p>${msg}</p>${gs.planDone&&S.mission&&S.mission.d===today()&&!S.mission.done?`<p class="note">Manca la missione di oggi, da fare nella vita vera: ${esc(S.mission.text)}</p>`:""}
+    <div class="row"><button class="btn" id="home">Torna a Oggi</button><button class="btn ghost" id="more">Altro gioco</button></div></div>`;
+    app.querySelector("#home").onclick=()=>go("oggi"); app.querySelector("#more").onclick=()=>go("giochi");
+    return;
+  }
+  RENDER[run.g](); wire();
+}
+const rateHTML=(a="Difficile",b="Così così",c="Facile")=>`<div class="rate"><button data-r="0">${a}</button><button data-r="1">${b}</button><button data-r="2">${c}</button></div>`;
+
+/* ---- Leggi a pezzi ---- */
+function chunks(s){return s.split("/").map(x=>x.trim()).filter(Boolean)}
+function autoChunk(s){if(s.includes("/"))return chunks(s);const out=[];s.split(/(?<=[,;:])\s+/).forEach(p=>{const w=p.split(/\s+/);for(let i=0;i<w.length;i+=4)out.push(w.slice(i,i+4).join(" "))});return out}
+const INIT={},RENDER={};
+INIT.leggi=()=>{
+  const lvl=S.speak.lvl, pool=FRASI[lvl].map(chunks);
+  const extra=S.extra.frasi.filter(x=>x.lvl===lvl).map(x=>x.pezzi);
+  const mine=S.dict.filter(x=>x.kind!=="studio").map(x=>x.pezzi&&x.pezzi.length?x.pezzi:autoChunk(x.it));
+  const q=[],used=new Set();
+  for(let i=0;i<3;i++){let src=pool;if(mine.length&&i===1)src=mine;else if(extra.length&&i!==1)src=Math.random()<.5?extra:pool;
+    let c,t=0;do{c=pick(src);t++}while(used.has(c.join("|"))&&t<12);used.add(c.join("|"));q.push(c)}
+  gs={q,i:0,c:S.chunky?0:99,rs:[]};
+};
+RENDER.leggi=()=>{
+  const c=gs.q[gs.i],all=gs.c>=c.length-1,v=hasVoice();
+  app.innerHTML=head("Leggi a voce alta",`Frase ${gs.i+1} di ${gs.q.length} · livello ${S.speak.lvl}`)+`
+  <div class="card"><div class="sentence">${c.map((p,i)=>`<span class="chunk ${all||i<gs.c?"":i===gs.c?"cur":"off"}">${esc(p)}</span>${i<c.length-1?'<span class="sep" aria-hidden="true">/</span>':""}`).join("")}</div>
+  ${all?(gs.fb?`<div class="heard"><p class="eyebrow">Ho sentito</p><p>${esc(gs.fb.sentito)}</p><p class="${gs.fb.r===2?"ok":""}">${esc(gs.fb.commento)}</p></div><button class="btn wide" id="cont">Avanti</button>`
+    :`<p class="muted small">Ora leggila tutta, piano, con una piccola pausa a ogni barra.</p>
+    ${v?micHTML("recl","Leggila: ti ascolto io")+`<p class="small muted">Oppure dimmi tu com'è andata:</p>`:`<p class="small muted">Com'è andata?</p>`}${rateHTML()}`)
+  :`<p class="muted small">Leggi il pezzo evidenziato, respira, poi vai avanti.</p><button class="btn wide" id="next">Pezzo successivo</button>`}
+  <label class="toggle"><input type="checkbox" id="chunky" ${S.chunky?"checked":""}> Un pezzo alla volta</label></div>${boredBtn()}`;
+  const nx=app.querySelector("#next");if(nx)nx.onclick=()=>{gs.c++;render()};
+  app.querySelector("#chunky").onchange=e=>{S.chunky=e.target.checked;save();gs.c=S.chunky?0:99;render()};
+  app.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>rateLeggi(+b.dataset.r));
+  const ct=app.querySelector("#cont");if(ct)ct.onclick=()=>rateLeggi(gs.fb.r);
+  const rb=app.querySelector("#recl");if(rb)rb.onclick=()=>toggleRec(rb,async a=>{
+    try{const r=await sample.json(`Sei un logopedista gentile. Un ragazzo di 18 anni con DSA ha letto ad alta voce questa frase in italiano: "${c.join(" ")}". Ascolta l'audio allegato.
+Rispondi SOLO con JSON {"sentito":"trascrizione fedele di quello che ha detto, con le esitazioni scritte come …","voto":2 se letta fluida e corretta, 1 se con qualche esitazione o parola cambiata, 0 se molto difficoltosa o se non ha letto la frase,"commento":"max 18 parole, concreto e incoraggiante, in italiano semplice"}`,{audio:a});
+      gs.fb={r:Math.max(0,Math.min(2,Math.round(+r.voto)||0)),sentito:String(r.sentito||"…"),commento:String(r.commento||"")};
+    }catch(e){toast(noClaudeMsg(e))}
+    render();
+  },30);
+};
+function rateLeggi(r){
+  const L=S.speak;L.log.push({d:today(),lvl:L.lvl,r});cap(L.log);gs.rs.push(r);gs.fb=null;
+  if(r===2){L.ups++;if(L.ups>=3&&L.lvl<5){L.lvl++;L.ups=0;toast("Sali al livello "+L.lvl+"!")}}
+  if(r===0){L.ups=0;S.chunky=true;if(L.lvl>1&&L.log.slice(-2).every(x=>x.r===0)){L.lvl--;toast("Torniamo al livello "+L.lvl+" per un po'.")}}
+  gs.i++;gs.c=S.chunky?0:99;
+  if(gs.i>=gs.q.length)finish(Math.round(gs.rs.reduce((a,b)=>a+b,0)/gs.rs.length));else{save();render()}
+}
+
+/* ---- Racconta ---- */
+INIT.racconta=()=>{gs={item:pick(RACCONTI)}};
+RENDER.racconta=()=>{
+  const v=hasVoice();
+  app.innerHTML=head(esc(gs.item.t),v?"Raccontalo a voce: il Cervello ti ascolta e ti dice com'è andata.":"Dillo a voce alta, in italiano. Se una parola non arriva, usa una frase salvagente e vai avanti.")+`
+  <div class="card"><div class="scaffold">${gs.item.s.map((x,i)=>`<div><b>${i+1}.</b> ${esc(x)}</div>`).join("")}</div>
+  <details><summary>Frasi salvagente</summary><ul>${SALVAGENTE.map(x=>`<li>${x}</li>`).join("")}</ul></details>
+  ${gs.fb?`<div class="heard"><p class="eyebrow">Ho sentito</p><p>${esc(gs.fb.sentito)}</p>${gs.fb.bene?`<p><b>Bene:</b> ${esc(gs.fb.bene)}</p>`:""}${gs.fb.migliora?`<p><b>Prova così:</b> ${esc(gs.fb.migliora)}</p>`:""}</div>
+    <button class="btn wide" id="cont">Avanti</button>`
+  :`${v?micHTML("recr","Racconta: ti ascolto")+`<p class="small muted">Oppure, se l'hai detto senza registrare:</p>`:`<p class="small muted">Com'è andata?</p>`}
+    ${rateHTML("Difficile","Così così","Bene")}<button class="btn soft" id="other">Altro argomento</button>`}</div>${boredBtn()}`;
+  app.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>finish(+b.dataset.r));
+  const o=app.querySelector("#other");if(o)o.onclick=()=>{let n;do{n=pick(RACCONTI)}while(n===gs.item);gs.item=n;render()};
+  const ct=app.querySelector("#cont");if(ct)ct.onclick=()=>finish(gs.fb.r);
+  const rb=app.querySelector("#recr");if(rb)rb.onclick=()=>toggleRec(rb,async a=>{
+    try{const r=await sample.json(`Sei un logopedista gentile. Un ragazzo di 18 anni con DSA (in dialetto gli viene più facile; in italiano, a voce, le parole gli si mischiano) racconta a voce questo argomento: "${gs.item.t}". Ascolta l'audio allegato.
+Rispondi SOLO con JSON {"sentito":"trascrizione fedele","voto":2 se ha raccontato in modo chiaro, 1 se con fatica o molte esitazioni, 0 se è riuscito a dire poco,"bene":"1 cosa fatta bene, max 15 parole","migliora":"riscrivi una sua frase in italiano più naturale, oppure dai 1 consiglio, max 22 parole"}`,{audio:a});
+      gs.fb={r:Math.max(0,Math.min(2,Math.round(+r.voto)||0)),sentito:String(r.sentito||"…"),bene:String(r.bene||""),migliora:String(r.migliora||"")};
+    }catch(e){toast(noClaudeMsg(e))}
+    render();
+  },90);
+};
+
+/* ---- Spiega senza dire ---- */
+INIT.spiega=()=>{const pool=SPIEGA.concat(S.extra.spiega);gs={items:shuffle(pool).slice(0,2),i:0,t:45,phase:"ready",rs:[]}};
+async function endSpiega(){
+  const it=gs.items[gs.i];
+  if(!gs.rec){gs.phase="rate";render();return}
+  gs.rec=false;gs.phase="wait";render();
+  const a=await Rec.stop();
+  if(!a||a.secs<1){gs.phase="rate";render();return}
+  try{const r=await sample.json(`Gioco "spiega senza dire": un ragazzo spiega a voce, in italiano, una parola segreta senza dirla e senza usare le parole vietate (${it.no.join(", ")}). Ascolta l'audio allegato.
+Prima prova a indovinare la parola SOLO da quello che senti. Poi confrontala con la parola segreta, che era "${it.w}".
+Rispondi SOLO con JSON {"sentito":"trascrizione fedele","indovino":"la parola che hai indovinato ascoltando","giusta":true se la tua ipotesi è la parola segreta o un sinonimo stretto,"vietate_usate":["parole vietate che ha detto"],"detta_la_parola":true se ha detto la parola segreta,"commento":"max 15 parole, incoraggiante"}`,{audio:a});
+    const clean=!(r.vietate_usate||[]).length&&!r.detta_la_parola;
+    gs.res={sentito:String(r.sentito||"…"),indovino:String(r.indovino||"?"),giusta:!!r.giusta,vietate:(r.vietate_usate||[]).map(String),detta:!!r.detta_la_parola,commento:String(r.commento||""),r:r.giusta&&clean?2:(r.giusta||clean)?1:0};
+    gs.phase="res";speak(gs.res.giusta?"È "+gs.res.indovino+"!":"Secondo me è "+gs.res.indovino+".");
+  }catch(e){toast(noClaudeMsg(e));gs.phase="rate"}
+  render();
+}
+RENDER.spiega=()=>{
+  const it=gs.items[gs.i],v=hasVoice();
+  app.innerHTML=head("Spiega senza dire",`Parola ${gs.i+1} di 2. ${v?"Spiegala a voce senza usare le parole vietate: il Cervello prova a indovinarla.":"Spiegala a voce come a un amico, in italiano, senza usare le parole vietate."}`)+`
+  <div class="card"><div class="word">${esc(it.w)}</div><p class="small muted" style="text-align:center">Parole vietate</p><div class="forbid">${it.no.map(x=>`<span>${esc(x)}</span>`).join("")}</div>
+  ${gs.phase==="ready"?`<button class="btn wide ${v?"mic":""}" id="go">${v?MIC_SVG+" ":""}Via! (45 secondi)</button>`
+  :gs.phase==="run"?`<div class="timer ${gs.t<=10?"low":""}" aria-live="off">${gs.t}</div><button class="btn soft wide" id="stop">Ho finito</button>${gs.rec?`<p class="small muted" style="text-align:center">Ti sto ascoltando…</p>`:""}`
+  :gs.phase==="wait"?`<p><span class="spin"></span> Il Cervello ci pensa…</p>`
+  :gs.phase==="res"?`<div class="heard"><p class="eyebrow">Il Cervello dice</p><p style="font-size:1.4rem;font-weight:600" class="${gs.res.giusta?"ok":"no"}">${esc(gs.res.indovino)}${gs.res.giusta?" — giusto!":""}</p>
+      ${gs.res.vietate.length?`<p class="no small">Hai usato: ${gs.res.vietate.map(esc).join(", ")}</p>`:""}${gs.res.detta?`<p class="no small">Hai detto la parola segreta.</p>`:""}
+      <p class="small">${esc(gs.res.commento)}</p><p class="small muted">Ho sentito: ${esc(gs.res.sentito)}</p></div><button class="btn wide" id="cont">Avanti</button>`
+  :`<p class="small muted">Com'è andata?</p>${rateHTML("Difficile","Così così","Bene")}`}</div>${boredBtn()}`;
+  const g=app.querySelector("#go");if(g)g.onclick=async()=>{
+    if(v){try{stopSpeak();await Rec.start();gs.rec=true}catch(e){gs.rec=false;toast(noClaudeMsg(e))}}
+    gs.phase="run";render();
+    timer=setInterval(()=>{gs.t--;const el=app.querySelector(".timer");if(el){el.textContent=gs.t;el.classList.toggle("low",gs.t<=10)}if(gs.t<=0){clearTimers();endSpiega()}},1000)};
+  const s=app.querySelector("#stop");if(s)s.onclick=()=>{clearTimers();endSpiega()};
+  const next=r=>{gs.rs.push(r);gs.i++;if(gs.i>=gs.items.length)finish(Math.round(gs.rs.reduce((a,c)=>a+c,0)/gs.rs.length));else{gs.t=45;gs.phase="ready";gs.res=null;render()}};
+  app.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>next(+b.dataset.r));
+  const ct=app.querySelector("#cont");if(ct)ct.onclick=()=>next(gs.res.r);
+};
+
+/* ---- Indovina la parola ---- */
+INIT.indovina=()=>{const pool=INDOVINA.concat(S.extra.indovina);gs={items:shuffle(pool).slice(0,3),i:0,shown:1,phase:"clues",pts:0,ok:0}};
+RENDER.indovina=()=>{
+  const it=gs.items[gs.i];
+  app.innerHTML=head("Indovina la parola",`Parola ${gs.i+1} di 3 · punti ${gs.pts}. Appena la sai, dilla ad alta voce in una frase: "È un…"`)+`
+  <div class="card"><div class="clues">${it.c.slice(0,gs.shown).map(x=>`<div>${esc(x)}</div>`).join("")}</div>
+  ${gs.phase==="clues"?`<div class="two"><button class="btn soft" id="more" ${gs.shown>=it.c.length?"disabled":""}>Altro indizio</button><button class="btn" id="rev">L'ho detta: rivela</button></div>`
+  :`<div class="word">${esc(it.w)}</div><div class="two"><button class="btn" id="yes">Era giusta!</button><button class="btn ghost" id="no">Non ci sono arrivato</button></div>`}</div>${boredBtn()}`;
+  const m=app.querySelector("#more");if(m)m.onclick=()=>{gs.shown++;render()};
+  const r=app.querySelector("#rev");if(r)r.onclick=()=>{gs.phase="rev";render()};
+  const nxt=ok=>{if(ok){gs.ok++;gs.pts+=Math.max(1,6-gs.shown)}gs.i++;gs.shown=1;gs.phase="clues";
+    if(gs.i>=gs.items.length){toast(`${gs.pts} punti in questo gioco`);finish(gs.ok===3?2:gs.ok>=1?1:0)}else render()};
+  const y=app.querySelector("#yes");if(y)y.onclick=()=>nxt(true);
+  const n=app.querySelector("#no");if(n)n.onclick=()=>nxt(false);
+};
+
+/* ---- Ragnatela (analisi delle caratteristiche) ---- */
+INIT.ragnatela=()=>{const pool=INDOVINA.concat(S.extra.indovina).map(x=>x.w);gs={w:pick(pool),step:0}};
+RENDER.ragnatela=()=>{
+  const last=gs.step>=RAGNATELA.length;
+  app.innerHTML=head("Ragnatela","Rispondi a voce alta con frasi intere. Ogni filo che aggiungi rende la parola più facile da ritrovare quando parli.")+`
+  <div class="card"><div class="word">${esc(gs.w)}</div><div class="steps">${RAGNATELA.map((_,i)=>`<i class="${i<gs.step?"on":""}"></i>`).join("")}</div>
+  ${last?`<p class="small muted">Rete completa. Com'è andata?</p>${rateHTML()}`
+  :`<div class="scaffold"><div><b>${gs.step+1}.</b> ${esc(RAGNATELA[gs.step])}</div></div><button class="btn wide" id="next">Detto, avanti</button>`}</div>${boredBtn()}`;
+  const n=app.querySelector("#next");if(n)n.onclick=()=>{gs.step++;render()};
+  app.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>finish(+b.dataset.r));
+};
+
+/* ---- Sequenze (memoria) ---- */
+function memRound(){const n=S.mem.span,words=S.mem.mode==="parole";
+  const seq=words?shuffle(PAROLE).slice(0,n):Array.from({length:n},()=>String(Math.floor(Math.random()*10)));
+  const opts=words?shuffle(seq.concat(shuffle(PAROLE.filter(w=>!seq.includes(w))).slice(0,Math.min(4,Math.ceil(n/2))))):["1","2","3","4","5","6","7","8","9","0"];
+  return {seq,opts,ans:[],used:[],k:-1,phase:"intro"}}
+INIT.sequenze=()=>{gs={round:0,res:[],...memRound()}};
+function memTick(){gs.k++;if(gs.k>=gs.seq.length){gs.phase="answer";render();return}render();
+  timer=setTimeout(()=>{const el=app.querySelector(".flash");if(el)el.textContent="";timer=setTimeout(memTick,300)},S.mem.mode==="parole"?1500:1100)}
+RENDER.sequenze=()=>{
+  const M=S.mem, sub=`Sequenza ${gs.round+1} di 3 · lunghezza ${gs.seq.length}`;
+  if(gs.phase==="intro"){
+    app.innerHTML=head("Sequenze",sub)+`<div class="card"><div class="seg" role="group" aria-label="Tipo"><button data-m="parole" aria-pressed="${M.mode==="parole"}">Parole</button><button data-m="numeri" aria-pressed="${M.mode==="numeri"}">Numeri</button></div>
+    <p class="small muted">${M.mode==="parole"?"Trucco: immagina una piccola scena con le parole, una dopo l'altra.":"Trucco: raggruppa le cifre a due a due, 4 7 1 9 diventa 47 e 19."}</p>
+    <button class="btn wide" id="go">Guarda</button></div>${boredBtn()}`;
+    app.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{M.mode=b.dataset.m;save();Object.assign(gs,memRound());render()});
+    app.querySelector("#go").onclick=()=>{gs.phase="show";memTick()};return;
+  }
+  if(gs.phase==="show"){app.innerHTML=head("Guarda e ricorda",sub)+`<div class="card"><div class="flash" aria-live="polite">${esc(gs.seq[gs.k])}</div><div class="dots">${gs.seq.map((_,i)=>`<i class="${i<=gs.k?"on":""}"></i>`).join("")}</div></div>`;return}
+  if(gs.phase==="answer"){
+    app.innerHTML=head("Rimettile in ordine",sub)+`<div class="card"><div class="answer" aria-live="polite">${gs.ans.map(a=>`<span>${esc(a)}</span>`).join("")||'<span class="muted small" style="background:none">Tocca nell\'ordine giusto</span>'}</div>
+    <div class="tiles">${gs.opts.map((o,i)=>`<button data-o="${i}" class="${gs.used.includes(i)&&M.mode==="parole"?"used":""}">${esc(o)}</button>`).join("")}</div>
+    <div class="two"><button class="btn ghost" id="undo" ${gs.ans.length?"":"disabled"}>Annulla</button><button class="btn" id="chk" ${gs.ans.length===gs.seq.length?"":"disabled"}>Controlla</button></div></div>`;
+    app.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const i=+b.dataset.o;if(gs.ans.length>=gs.seq.length)return;if(M.mode==="parole"&&gs.used.includes(i))return;gs.ans.push(gs.opts[i]);gs.used.push(i);render()});
+    app.querySelector("#undo").onclick=()=>{gs.ans.pop();gs.used.pop();render()};
+    app.querySelector("#chk").onclick=()=>{
+      const ok=gs.ans.join("|")===gs.seq.join("|");M.log.push({d:today(),span:M.span,ok,mode:M.mode});cap(M.log);gs.note="";
+      if(ok){M.ok++;if(M.ok>=2){M.span=Math.min(9,M.span+1);M.ok=0;gs.note="Sequenza più lunga: ora "+M.span+"."}M.best=Math.max(M.best,M.span)}
+      else{M.ok=0;if(M.log.slice(-2).every(x=>!x.ok)&&M.span>2){M.span--;gs.note="Torno a "+M.span+" per consolidare."}}
+      gs.res.push(ok);gs.ok=ok;gs.phase="fb";save();render()};
+    return;
+  }
+  app.innerHTML=head(gs.ok?"Giusto!":"Quasi",sub)+`<div class="card">${gs.ok?"":`<p>L'ordine era: <b>${gs.seq.map(esc).join(" · ")}</b></p>`}${gs.note?`<p class="note">${esc(gs.note)}</p>`:""}
+  <button class="btn wide" id="mn">${gs.round>=2?"Fine":"Prossima"}</button></div>`;
+  app.querySelector("#mn").onclick=()=>{if(gs.round>=2){const g=gs.res.filter(Boolean).length;finish(g===3?2:g?1:0);return}const r=gs.round+1,res=gs.res;Object.assign(gs,memRound(),{round:r,res,phase:"show"});memTick()};
+};
+
+/* ---- Ripasso (ripasso distanziato) ---- */
+INIT.ripasso=()=>{gs={cards:shuffle(dueCards()).slice(0,5),i:0,rev:false,ok:0}};
+RENDER.ripasso=()=>{
+  if(!gs.cards.length){app.innerHTML=head("Ripasso frasi","Niente da ripassare adesso. Salva frasi nella sezione Dialetto: torneranno qui nel giorno giusto.")+`<button class="btn wide" id="skip">Avanti</button>`;app.querySelector("#skip").onclick=()=>finish(1);return}
+  const c=gs.cards[gs.i], p=c.pezzi&&c.pezzi.length?c.pezzi:autoChunk(c.it), hide=p.length>1?p.length-1:-1;
+  app.innerHTML=head("Ripasso frasi",`Frase ${gs.i+1} di ${gs.cards.length}. Prima prova a ricordarla, poi controlla.`)+`
+  <div class="card">${c.kind==="studio"?`<p class="eyebrow">Domanda${c.topic?" · "+esc(c.topic):""}</p><p style="font-size:1.2rem">${esc(c.dial)}</p><p class="eyebrow">Rispondi a voce alta</p>`
+  :c.dial?`<p class="eyebrow">Tu la dici così</p><p style="font-size:1.2rem">${esc(c.dial)}</p><p class="eyebrow">Dilla in italiano, a voce alta</p>`
+  :`<p class="eyebrow">Completa a voce alta</p><p style="font-size:1.2rem">${p.map((x,i)=>i===hide&&!gs.rev?"______":esc(x)).join(" / ")}</p>`}
+  ${gs.rev?`<p class="sentence" style="min-height:0">${esc(p.join(" "))}</p><div class="two"><button class="btn" id="y">L'ho ricordata</button><button class="btn ghost" id="n">Non ancora</button></div>`
+  :`<button class="btn wide" id="rv">Controlla</button>`}</div>${boredBtn()}`;
+  const rv=app.querySelector("#rv");if(rv)rv.onclick=()=>{gs.rev=true;render()};
+  const step=ok=>{if(ok){c.box=Math.min(BOX_DAYS.length-1,(c.box||0)+1);gs.ok++}else c.box=0;c.due=addDays(BOX_DAYS[c.box]);gs.i++;gs.rev=false;save();
+    if(gs.i>=gs.cards.length)finish(gs.ok===gs.cards.length?2:gs.ok?1:0);else render()};
+  const y=app.querySelector("#y");if(y)y.onclick=()=>step(true);
+  const n=app.querySelector("#n");if(n)n.onclick=()=>step(false);
+};
+
+/* ---- 1 minuto: una sola cosa piccola ---- */
+INIT.minuto=()=>{
+  const due=dueCards(), kinds=["frase","indovina"].concat(due.length?["ripasso","ripasso"]:[]);
+  const k=pick(kinds);
+  if(k==="ripasso")gs={k,c:pick(due),rev:false};
+  else if(k==="indovina")gs={k,it:pick(INDOVINA.concat(S.extra.indovina)),shown:1,rev:false};
+  else{const pool=FRASI[S.speak.lvl].map(chunks).concat(S.extra.frasi.filter(x=>x.lvl===S.speak.lvl).map(x=>x.pezzi));gs={k,p:pick(pool)}}
+};
+RENDER.minuto=()=>{
+  const top=`<div class="playbar"><div class="row"><span class="eyebrow">1 minuto</span><button class="btn ghost sm" id="quit">Esci</button></div></div>`;
+  if(gs.k==="frase"){
+    app.innerHTML=top+`<div class="hello"><h1>Leggila a voce alta</h1><p class="muted">Piano, con una piccola pausa a ogni barra.</p></div>
+    <div class="card"><div class="sentence" style="min-height:0">${gs.p.map((x,i)=>`<span>${esc(x)}</span>${i<gs.p.length-1?'<span class="sep" aria-hidden="true">/</span>':""}`).join("")}</div>
+    <button class="btn wide" id="ok">Detta!</button></div>`;
+    app.querySelector("#ok").onclick=()=>finish(2);return;
+  }
+  if(gs.k==="indovina"){
+    const it=gs.it;
+    app.innerHTML=top+`<div class="hello"><h1>Indovina la parola</h1><p class="muted">Quando la sai, dilla ad alta voce.</p></div>
+    <div class="card"><div class="clues">${it.c.slice(0,gs.shown).map(x=>`<div>${esc(x)}</div>`).join("")}</div>
+    ${gs.rev?`<div class="word">${esc(it.w)}</div><button class="btn wide" id="ok">Fatto</button>`
+    :`<div class="two"><button class="btn soft" id="more" ${gs.shown>=it.c.length?"disabled":""}>Altro indizio</button><button class="btn" id="rv">Rivela</button></div>`}</div>`;
+    const m=app.querySelector("#more");if(m)m.onclick=()=>{gs.shown++;render()};
+    const r=app.querySelector("#rv");if(r)r.onclick=()=>{gs.rev=true;render()};
+    const o=app.querySelector("#ok");if(o)o.onclick=()=>finish(2);return;
+  }
+  const c=gs.c, p=c.pezzi&&c.pezzi.length?c.pezzi:autoChunk(c.it);
+  app.innerHTML=top+`<div class="hello"><h1>${c.kind==="studio"?"Rispondi a voce alta":"Dilla in italiano"}</h1><p class="muted">Prima prova a ricordare, poi controlla.</p></div>
+  <div class="card"><p style="font-size:1.2rem">${esc(c.dial||p.slice(0,-1).join(" ")+" …")}</p>
+  ${gs.rev?`<p class="note">${esc(p.join(" "))}</p><div class="two"><button class="btn" id="y">La sapevo</button><button class="btn ghost" id="n">Non ancora</button></div>`:`<button class="btn wide" id="rv">Controlla</button>`}</div>`;
+  const r=app.querySelector("#rv");if(r)r.onclick=()=>{gs.rev=true;render()};
+  const step=ok=>{c.box=ok?Math.min(BOX_DAYS.length-1,(c.box||0)+1):0;c.due=addDays(BOX_DAYS[c.box]);finish(ok?2:1)};
+  const y=app.querySelector("#y");if(y)y.onclick=()=>step(true);
+  const n=app.querySelector("#n");if(n)n.onclick=()=>step(false);
+};
+
+/* ---- voce: microfono (registrazione WAV) e lettura ad alta voce ---- */
+const canMic=()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)&&!!(window.AudioContext||window.webkitAudioContext);
+const hasVoice=()=>!!sample&&canMic();
+const Rec={on:false,
+  async start(){
+    const AC=window.AudioContext||window.webkitAudioContext;this.ctx=new AC();try{await this.ctx.resume()}catch(e){}
+    try{this.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}})}
+    catch(e){try{this.ctx.close()}catch(_){}throw {code:"mic"}}
+    this.src=this.ctx.createMediaStreamSource(this.stream);this.proc=this.ctx.createScriptProcessor(4096,1,1);this.bufs=[];this.rate=this.ctx.sampleRate;
+    this.proc.onaudioprocess=e=>{if(this.on)this.bufs.push(new Float32Array(e.inputBuffer.getChannelData(0)))};
+    this.src.connect(this.proc);this.proc.connect(this.ctx.destination);this.on=true;
+  },
+  async stop(){
+    if(!this.ctx)return null;this.on=false;
+    try{this.src.disconnect();this.proc.disconnect()}catch(e){}
+    try{this.stream.getTracks().forEach(t=>t.stop())}catch(e){}
+    try{await this.ctx.close()}catch(e){}this.ctx=null;
+    const len=this.bufs.reduce((a,b)=>a+b.length,0),all=new Float32Array(len);let o=0;this.bufs.forEach(b=>{all.set(b,o);o+=b.length});this.bufs=[];
+    const target=16000,ratio=this.rate/target,n=Math.floor(len/ratio),pcm=new Int16Array(n);
+    for(let i=0;i<n;i++){const s=all[Math.floor(i*ratio)]||0;pcm[i]=Math.max(-1,Math.min(1,s))*0x7fff}
+    const buf=new ArrayBuffer(44+pcm.length*2),v=new DataView(buf),w=(p,s)=>{for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i))};
+    w(0,"RIFF");v.setUint32(4,36+pcm.length*2,true);w(8,"WAVE");w(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+    v.setUint32(24,target,true);v.setUint32(28,target*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,pcm.length*2,true);
+    new Int16Array(buf,44).set(pcm);
+    const bytes=new Uint8Array(buf);let bin="";for(let i=0;i<bytes.length;i+=0x8000)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));
+    return {mime:"audio/wav",data:btoa(bin),secs:n/target};
+  }
+};
+let recTimer=null;
+function abortRec(){clearInterval(recTimer);recTimer=null;if(Rec.on)Rec.stop().catch(()=>{})}
+const MIC_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+const micHTML=(id,label)=>`<button class="btn mic wide" id="${id}">${MIC_SVG} ${label}</button>`;
+/* tocca per iniziare, tocca di nuovo per finire. onDone riceve l'audio */
+async function toggleRec(btn,onDone,maxS=60){
+  if(Rec.on){
+    clearInterval(recTimer);btn.disabled=true;btn.classList.remove("rec");btn.innerHTML='<span class="spin"></span> Ti ascolto…';
+    const a=await Rec.stop();
+    if(!a||a.secs<0.7){toast("Troppo corto: tocca, parla, poi tocca di nuovo.");render();return}
+    onDone(a);return;
+  }
+  try{stopSpeak();await Rec.start()}catch(e){toast(noClaudeMsg(e));return}
+  btn.classList.add("rec");const t0=Date.now();
+  const upd=()=>{const s=Math.floor((Date.now()-t0)/1000);btn.innerHTML=`<span class="dot"></span> Ho finito · ${s}s`;if(s>=maxS)btn.click()};
+  upd();recTimer=setInterval(upd,500);
+}
+function speak(t){if(!S.tts||!window.speechSynthesis||!t)return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t));u.lang="it-IT";
+    const v=speechSynthesis.getVoices().find(v=>/^it/i.test(v.lang));if(v)u.voice=v;u.rate=.95;speechSynthesis.speak(u)}catch(e){}}
+function stopSpeak(){try{speechSynthesis.cancel()}catch(e){}}
+const ttsToggle=()=>`<label class="toggle"><input type="checkbox" id="tts" ${S.tts?"checked":""}> Leggi ad alta voce le risposte</label>`;
+function wireTts(){const t=app.querySelector("#tts");if(t)t.onchange=e=>{S.tts=e.target.checked;if(!S.tts)stopSpeak();save()}}
+function voiceCardHTML(){return ""}
+function wireVoice(){}
+
+/* ---- Conversazione (gioco di ruolo: il Cervello fa l'altra persona e ti ascolta) ---- */
+INIT.conversazione=()=>{gs={phase:"pick",scene:"",log:[],busy:false,sug:[],showSug:false,meglio:"",err:"",notes:[],typing:false}};
+const userTurns=()=>gs.log.filter(m=>m.who==="io").length;
+async function convTurn(audio){
+  gs.busy=true;gs.err="";render();
+  const tr=gs.log.map(m=>(m.who==="io"?"RAGAZZO: ":"TU: ")+m.t).join("\n");
+  const au=audio?`
+La sua NUOVA risposta è nell'audio allegato: trascrivila fedelmente in "detto" (anche parole in dialetto ed esitazioni). In "nota_voce" scrivi in max 10 parole come ha parlato (fluido, esitazioni, parole in dialetto). Le correzioni in "meglio" riguardano questa nuova risposta.`:"";
+  try{
+    const r=await sample.json(`Stai facendo un gioco di ruolo per aiutare un ragazzo di 18 anni con DSA ad allenarsi a parlare in italiano (in dialetto gli viene più facile, in italiano a voce le parole gli si mischiano). Scena: "${gs.scene}". Tu interpreti l'altra persona della scena in modo realistico, gentile e paziente.${S.interessi?" Suoi interessi: "+S.interessi+".":""}
+Conversazione finora:
+${tr||"(nessuna: inizia tu la scena)"}${au}
+Scrivi la tua prossima battuta: italiano parlato, massimo 25 parole, che lo inviti a rispondere. Se la sua ultima frase aveva errori o forme dialettali, metti in "meglio" quella frase riscritta in italiano corretto e naturale; se andava bene, stringa vuota. In "suggerimenti" metti 2 risposte brevi e naturali che lui potrebbe dare alla tua battuta.
+Rispondi SOLO con JSON {${audio?'"detto":"...","nota_voce":"...",':""}"battuta":"...","meglio":"...","suggerimenti":["...","..."]}`,{audio});
+    if(audio){const d=String(r.detto||"").trim();
+      if(!d){gs.err="Non ho sentito bene. Riprova parlando un po' più vicino al telefono.";gs.busy=false;render();return}
+      gs.log.push({who:"io",t:d});if(r.nota_voce)gs.notes.push(String(r.nota_voce))}
+    gs.meglio=String(r.meglio||"");
+    if(userTurns()>=5){gs.busy=false;return convEnd()}
+    const b=String(r.battuta||"…");gs.log.push({who:"ai",t:b});gs.sug=(r.suggerimenti||[]).map(String).slice(0,2);gs.showSug=false;speak(b);
+  }catch(e){gs.err=noClaudeMsg(e)}
+  gs.busy=false;if(tab==="play"&&run&&run.g==="conversazione"&&gs.phase==="talk")render();
+}
+async function convEnd(){
+  gs.phase="fb";gs.busy=true;gs.err="";render();
+  const tr=gs.log.map(m=>(m.who==="io"?"RAGAZZO: ":"ALTRO: ")+m.t).join("\n");
+  try{const r=await sample.json(`Sei un logopedista gentile. Questo ragazzo di 18 anni con DSA si è allenato a parlare in italiano nella scena "${gs.scene}":
+${tr}
+${gs.notes.length?"Note su come ha parlato a voce: "+gs.notes.join("; ")+".":"Ha risposto scrivendo."}
+Dagli un riscontro breve e incoraggiante, in italiano semplice: "bene" = 2 cose concrete che ha fatto bene; "migliora" = 1 sola cosa da migliorare, in una frase; "frase" = una frase utile per questa scena, in italiano naturale, da ripassare nei prossimi giorni.
+Rispondi SOLO con JSON {"bene":["...","..."],"migliora":"...","frase":"..."}`);
+    gs.fb={bene:(r.bene||[]).map(String).slice(0,2),migliora:String(r.migliora||""),frase:String(r.frase||"")};
+    speak((gs.fb.bene[0]||"")+". "+gs.fb.migliora);
+  }catch(e){gs.err=noClaudeMsg(e);gs.fb={bene:[],migliora:"",frase:""}}
+  gs.busy=false;if(tab==="play"&&run&&run.g==="conversazione")render();
+}
+RENDER.conversazione=()=>{
+  if(!sample){app.innerHTML=head("Conversazione","Il Cervello non è ancora collegato: manca la chiave Gemini.")+boredBtn();return}
+  const v=hasVoice();
+  if(gs.phase==="pick"){
+    const scenes=(curStep()?[curStep().scena]:[]).concat(SCENE.filter(x=>!curStep()||x!==curStep().scena));
+    app.innerHTML=head("Conversazione",v?"Il Cervello fa l'altra persona: parla lui, poi rispondi tu a voce. Sono 5 battute.":"Il Cervello fa l'altra persona. Rispondi scrivendo o dettando. Sono 5 battute.")+`
+    <div class="card"><h2>Scegli la scena</h2><div class="chips">${scenes.map((s,i)=>`<button data-sc="${esc(s)}" ${i===0&&curStep()?'style="border-color:var(--accent);color:var(--accent);font-weight:600"':""}>${esc(s)}</button>`).join("")}</div>
+    ${curStep()?`<p class="small muted">La prima è la scena della tua settimana.</p>`:""}
+    <label for="own">Oppure una scena tua</label><input id="own" maxlength="120" placeholder="es. chiedere un giorno libero al capo"><button class="btn soft" id="ownb">Inizia con questa</button>
+    ${ttsToggle()}</div>${boredBtn()}`;
+    wireTts();
+    const start=s=>{gs.scene=s;gs.phase="talk";convTurn()};
+    app.querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>start(b.dataset.sc));
+    app.querySelector("#own").onkeydown=e=>{if(e.key==="Enter"&&e.target.value.trim())start(e.target.value.trim())};
+    app.querySelector("#ownb").onclick=()=>{const x=app.querySelector("#own").value.trim();if(x)start(x)};
+    return;
+  }
+  if(gs.phase==="talk"){
+    const n=userTurns(),last=gs.log[gs.log.length-1],canRetry=!gs.log.length||(last&&last.who==="io");
+    const lastAi=[...gs.log].reverse().find(m=>m.who==="ai");
+    app.innerHTML=head(esc(gs.scene),`Battuta ${Math.min(n+1,5)} di 5`)+`
+    <div class="card"><div class="chat">${gs.log.map((m,i)=>`<div class="msg ${m.who==="io"?"me":"ai"}">${esc(m.t)}</div>${m.who==="io"&&i===gs.log.length-2&&gs.meglio?`<p class="note small" style="align-self:flex-end;max-width:90%">Più naturale: ${esc(gs.meglio)}</p>`:""}`).join("")}
+    ${gs.busy?`<div class="msg ai"><span class="spin"></span></div>`:""}</div>
+    ${gs.err?`<p class="no small">${esc(gs.err)}</p>${canRetry?`<button class="btn soft" id="retry">Riprova</button>`:""}`:""}
+    ${!gs.busy?`
+      ${gs.showSug&&gs.sug.length?`<div class="scaffold">${gs.sug.map(s=>`<div>${esc(s)}</div>`).join("")}</div>`:""}
+      ${v&&!gs.typing?micHTML("recc","Rispondi a voce")
+        :`<label for="ans">La tua risposta</label><p class="small muted">Puoi anche dettarla con il microfono della tastiera.</p><textarea id="ans" maxlength="300"></textarea><button class="btn" id="say">Rispondi</button>`}
+      <div class="two"><button class="btn ghost" id="help" ${gs.showSug||!gs.sug.length?"disabled":""}>Aiuto: idee</button>${v?`<button class="btn ghost" id="type">${gs.typing?"Usa la voce":"Scrivi invece"}</button>`:`<button class="btn ghost" id="again" ${lastAi?"":"disabled"}>Riascolta</button>`}</div>
+      ${v&&lastAi?`<button class="x" id="again" style="align-self:flex-start;padding-left:0">Riascolta l'ultima battuta</button>`:""}
+      ${n>=2?`<button class="btn soft" id="end">Finisci qui</button>`:""}`:""}</div>${boredBtn()}`;
+    const q=s=>app.querySelector(s);
+    const rt=q("#retry");if(rt)rt.onclick=()=>convTurn();
+    const h=q("#help");if(h)h.onclick=()=>{gs.showSug=true;render()};
+    const ty=q("#type");if(ty)ty.onclick=()=>{gs.typing=!gs.typing;render()};
+    const ag=q("#again");if(ag)ag.onclick=()=>{const S0=S.tts;S.tts=true;speak(lastAi&&lastAi.t);S.tts=S0};
+    const e=q("#end");if(e)e.onclick=convEnd;
+    const s=q("#say");if(s)s.onclick=()=>{const x=q("#ans").value.trim();if(!x)return;gs.log.push({who:"io",t:x});userTurns()>=5?convEnd():convTurn()};
+    const rb=q("#recc");if(rb)rb.onclick=()=>toggleRec(rb,a=>convTurn(a),40);
+    return;
+  }
+  if(gs.busy){app.innerHTML=head("Com'è andata",esc(gs.scene))+`<div class="card"><p><span class="spin"></span> Il Cervello sta riascoltando la conversazione…</p></div>`;return}
+  const f=gs.fb;
+  app.innerHTML=head("Com'è andata",esc(gs.scene))+`<div class="card">
+    ${gs.err?`<p class="no small">${esc(gs.err)}</p>`:""}
+    ${f.bene.length?`<p class="eyebrow">Hai fatto bene</p><ul style="margin:0;padding-left:20px">${f.bene.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${f.migliora?`<p class="eyebrow">Una cosa da migliorare</p><p>${esc(f.migliora)}</p>`:""}
+    ${f.frase?`<p class="eyebrow">Frase da ricordare</p><p class="sentence" style="min-height:0;font-size:1.25rem">${esc(f.frase)}</p><button class="btn soft" id="keep" ${gs.kept?"disabled":""}>${gs.kept?"Salvata nel ripasso":"Salva nel ripasso"}</button>`:""}
+    <p class="small muted">Quanto è stato difficile?</p>${rateHTML()}</div>`;
+  const k=app.querySelector("#keep");if(k)k.onclick=()=>{addCard("",f.frase,autoChunk(f.frase));gs.kept=true;save();render()};
+  app.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>finish(+b.dataset.r));
+};
+
+/* ---- Studia un argomento (domande + ripasso distanziato) ---- */
+INIT.studia=()=>{gs={phase:"input",busy:false,err:""}};
+RENDER.studia=()=>{
+  if(!sample){app.innerHTML=head("Studia un argomento","Il Cervello non è ancora collegato: manca la chiave Gemini.")+boredBtn();return}
+  if(gs.phase==="input"){
+    app.innerHTML=head("Studia un argomento","Scrivi l'argomento o incolla i tuoi appunti. Il Cervello prepara i punti chiave e 6 domande. Poi le domande tornano nel Ripasso nei giorni giusti.")+`
+    <div class="card"><label for="mat">Cosa devi imparare?</label><textarea id="mat" maxlength="4000" style="min-height:140px" placeholder="es. la Prima guerra mondiale, oppure incolla qui gli appunti">${esc(gs.mat||"")}</textarea>
+    <button class="btn wide" id="mk" ${gs.busy?"disabled":""}>${gs.busy?'<span class="spin"></span> Preparo…':"Prepara le domande"}</button>${gs.err?`<p class="no small">${esc(gs.err)}</p>`:""}</div>${boredBtn()}`;
+    app.querySelector("#mk").onclick=async()=>{const t=app.querySelector("#mat").value.trim();if(!t)return;gs.mat=t;gs.busy=true;gs.err="";render();
+      try{const r=await sample.json(`Aiuta un ragazzo di 18 anni con DSA, che si annoia facilmente, a studiare questo materiale:
+"""${t}"""
+Crea: "titolo" (max 4 parole); "punti": da 3 a 5 punti chiave brevissimi (max 12 parole ciascuno); "domande": 6 domande dalla più facile alla più difficile, ognuna con una risposta breve (max 20 parole), in italiano semplice. Mescola i tipi: cos'è, perché, un esempio, un collegamento. Se il materiale è solo un argomento, usa conoscenze corrette e di base.
+Rispondi SOLO con JSON {"titolo":"...","punti":["..."],"domande":[{"d":"...","r":"..."}]}`,{modelTier:"default"});
+        const q=(r.domande||[]).filter(x=>x&&x.d&&x.r).map(x=>({d:String(x.d),r:String(x.r)})).slice(0,6);if(!q.length)throw{};
+        Object.assign(gs,{phase:"punti",busy:false,title:String(r.titolo||"Studio"),punti:(r.punti||[]).map(String).slice(0,5),q,i:0,rev:false,known:[]});render()}
+      catch(e){gs.busy=false;gs.err=noClaudeMsg(e);render()}};
+    return;
+  }
+  if(gs.phase==="punti"){
+    app.innerHTML=head(esc(gs.title),"Leggi i punti chiave una volta, a voce alta. Poi si nascondono e arrivano le domande.")+`
+    <div class="card"><div class="scaffold">${gs.punti.map((p,i)=>`<div><b>${i+1}.</b> ${esc(p)}</div>`).join("")}</div>
+    <button class="btn wide" id="go">Nascondi e inizia le domande</button></div>${boredBtn()}`;
+    app.querySelector("#go").onclick=()=>{gs.phase="q";render()};return;
+  }
+  if(gs.phase==="q"){
+    const q=gs.q[gs.i];
+    app.innerHTML=head(esc(gs.title),`Domanda ${gs.i+1} di ${gs.q.length}. Rispondi a voce alta prima di controllare.`)+`
+    <div class="card"><p style="font-size:1.25rem;font-weight:500">${esc(q.d)}</p>
+    ${gs.rev?`<p class="note">${esc(q.r)}</p><div class="two"><button class="btn" id="y">La sapevo</button><button class="btn ghost" id="n">Non ancora</button></div>`
+    :`<button class="btn wide" id="rv">Controlla</button>`}</div>${boredBtn()}`;
+    const rv=app.querySelector("#rv");if(rv)rv.onclick=()=>{gs.rev=true;render()};
+    const step=ok=>{gs.known.push(ok);
+      S.dict.push({kind:"studio",topic:gs.title,dial:q.d,it:q.r,pezzi:[q.r],ts:Date.now(),box:ok?1:0,due:addDays(ok?3:1)});
+      gs.i++;gs.rev=false;save();if(gs.i>=gs.q.length)gs.phase="end";render()};
+    const y=app.querySelector("#y");if(y)y.onclick=()=>step(true);
+    const n=app.querySelector("#n");if(n)n.onclick=()=>step(false);
+    return;
+  }
+  const k=gs.known.filter(Boolean).length;
+  app.innerHTML=head(`${k} su ${gs.q.length}`,esc(gs.title))+`<div class="card"><p>${k===gs.q.length?"Le sapevi tutte.":"Ottimo inizio."} Tutte le domande ora sono nel Ripasso: quelle che non sapevi tornano domani, le altre tra 3 giorni. Rispondere più volte nei giorni giusti è il modo migliore per non dimenticare.</p>
+  <button class="btn wide" id="fin">Fine</button></div>`;
+  app.querySelector("#fin").onclick=()=>finish(k>=5?2:k>=3?1:0);
+};
+
+/* ================= OGGI ================= */
+function hint(){
+  const sp=S.speak.log.slice(-5);
+  if(sp.length>=3&&sp.filter(x=>x.r===0).length>=3)return "Ultimamente parlare è stato faticoso. Va bene andare piano: frasi corte, un pezzo alla volta.";
+  if(prefs().bored.length)return "Quando un gioco ti annoia, premi “Mi sto annoiando”: l'app impara e te lo propone meno.";
+  if(!S.dict.length)return "Scrivi nella sezione Dialetto una frase che dici spesso: tornerà nei giorni giusti per fissarla.";
+  if(!S.interessi)return "Dì al Cervello cosa ti piace: creerà esercizi sui tuoi argomenti.";
+  return "Pochi minuti ogni giorno funzionano meglio di una volta lunga ogni tanto.";
+}
+/* ---- obiettivo: viste e ragionamento ---- */
+let ci={score:null,volte:null},goalBusy=false,goalErr="",goalConfirm=false;
+function goalTodayHTML(){
+  let h="";
+  const R=S.goal&&S.goal.reviews.length?S.goal.reviews[S.goal.reviews.length-1]:null;
+  if(R&&!R.seen) h+=`<div class="card brain"><p class="eyebrow">Il Cervello ha guardato la tua settimana</p><p>${esc(R.analisi)}</p>
+    ${R.cambio?`<p class="note">${esc(R.cambio)}</p>`:""}<button class="btn soft" id="rvseen">Ok, ho capito</button></div>`;
+  if(goalBusy) h+=`<div class="card"><p><span class="spin"></span> Il Cervello sta ragionando sulla tua settimana…</p></div>`;
+  if(checkinDue()&&!goalBusy){
+    const first=!S.goal.checkins.length;
+    h+=`<div class="card"><p class="eyebrow">${first?"Punto di partenza":"Controllo della settimana"}</p>
+    <h2>${first?"Adesso, parlare in italiano con le persone ti viene…":"Questa settimana, parlare in italiano con le persone ti è venuto…"}</h2>
+    <div class="stack">${SCALA.map((s,i)=>`<button class="btn ${ci.score===i+1?"":"soft"}" data-ci="${i+1}" style="min-height:46px;text-align:left">${i+1} · ${s}</button>`).join("")}</div>
+    ${first?"":`<p style="font-weight:500">Quante volte hai parlato in italiano con qualcuno?</p><div class="chips">${VOLTE.map((v,i)=>`<button data-vo="${i}" style="${ci.volte===i?"background:var(--accent);color:var(--surface);border-color:var(--accent)":""}">${v}</button>`).join("")}</div>`}
+    <label for="cinote">Una cosa successa <span class="muted small">(facoltativo)</span></label><textarea id="cinote" maxlength="300" placeholder="es. al bar mi sono bloccato su una parola, ma poi l'ho detta">${esc(ci.note||"")}</textarea>
+    <button class="btn wide" id="cisend" ${ci.score&&(first||ci.volte!=null)?"":"disabled"}>Salva</button>
+    ${goalErr?`<p class="no small">${esc(goalErr)}</p>`:""}</div>`;
+  }
+  const st=curStep(), w=goalWeek();
+  if(!S.goal) h+=`<div class="card"><h2>Dai un obiettivo all'app</h2><p class="small muted">Scrivi cosa vuoi ottenere: il Cervello costruisce un percorso di 4 settimane e lo corregge ogni settimana in base a come vai.</p><button class="btn soft" id="togoal">Scrivi il mio obiettivo</button></div>`;
+  else if(st) h+=`<div class="card"><div class="row between"><p class="eyebrow">Settimana ${w+1} di ${S.goal.steps.length}</p><span class="tag">${esc(FOCUS[st.focus])}</span></div>
+    <h2>${esc(st.titolo)}</h2><p class="small muted">${esc(st.perche)}</p>
+    <div class="steps">${S.goal.steps.map((_,i)=>`<i class="${i<=w?"on":""}"></i>`).join("")}</div>
+    <p class="small">Obiettivo: <b>${esc(S.goal.text)}</b></p></div>`;
+  else if(w>=S.goal.steps.length&&!checkinDue()) h+=`<div class="card"><h2>Percorso finito</h2><p class="small muted">Hai completato tutte le settimane. Nel Cervello puoi creare un nuovo percorso.</p><button class="btn soft" id="togoal">Nuovo percorso</button></div>`;
+  return h;
+}
+function wireGoalToday(){
+  const q=s=>app.querySelector(s);
+  app.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{ci.note=q("#cinote").value;ci.score=+b.dataset.ci;render()});
+  app.querySelectorAll("[data-vo]").forEach(b=>b.onclick=()=>{ci.note=q("#cinote").value;ci.volte=+b.dataset.vo;render()});
+  const cs=q("#cisend");if(cs)cs.onclick=()=>submitCheckin(q("#cinote").value.trim());
+  const rs=q("#rvseen");if(rs)rs.onclick=()=>{S.goal.reviews[S.goal.reviews.length-1].seen=true;save();render()};
+  const tg=q("#togoal");if(tg)tg.onclick=()=>go("cervello");
+}
+function submitCheckin(note){
+  const first=!S.goal.checkins.length, w=Math.max(0,goalWeek());
+  S.goal.checkins.push({d:today(),score:ci.score,volte:first?null:ci.volte,note,week:w});
+  S.xp+=15;bump();ci={score:null,volte:null};goalErr="";save();
+  toast(first?"Salvato. Tra una settimana vediamo come cambia.":"Grazie. +15 punti.");
+  if(!first) reviewWeek(w); else render();
+}
+async function reviewWeek(w){
+  const G=S.goal, steps=G.steps;
+  if(!sample){ // senza Claude: regola semplice
+    const c=G.checkins, d=c.length>1?c[c.length-1].score-c[c.length-2].score:0;
+    if(w>=steps.length) steps.push(cleanStep(DEFAULT_PATH[3],3));
+    G.reviews.push({d:today(),analisi:d>0?"Parlare con le persone ti è venuto più facile di prima. Il percorso continua così.":d<0?"Questa settimana è stata più dura. Capita: la prossima settimana andiamo con calma.":"Sei stabile. Continuiamo con il percorso.",cambio:"",seen:false});
+    save();render();return;
+  }
+  goalBusy=true;render();
+  const hist=G.checkins.map(c=>`settimana ${c.week+1}: facilità ${c.score}/5${c.volte!=null?", ha parlato in italiano "+VOLTE[c.volte]:""}${c.note?', nota: "'+c.note+'"':""}`).join("\n");
+  const stats=G.steps.map((s,i)=>i<=w?`settimana ${i+1} "${s.titolo}" (focus ${s.focus}): ${JSON.stringify(weekStats(i))}`:"").filter(Boolean).join("\n");
+  const nextIdx=Math.min(w,steps.length);
+  try{
+    const r=await sample.json(`Sei il "Cervello" di un'app che aiuta un ragazzo a raggiungere il suo obiettivo. Ragiona come un logopedista e un allenatore. ${ctx()}
+Percorso: ${steps.map((s,i)=>`${i+1}. ${s.titolo} (${s.focus})`).join("; ")}.
+Controlli settimanali (il dato più importante: misura la vita vera):
+${hist}
+Uso dell'app per settimana:
+${stats}
+Ragiona su cosa funziona e cosa no, collegando l'uso dell'app a come va nella vita vera. Poi decidi la settimana ${nextIdx+1}: tienila uguale se funziona, rendila più facile se è andata male o si è annoiato, più impegnativa se è andata bene. Focus possibili: parlare, parole, memoria, dialogo, studio.
+Rispondi SOLO con JSON: {"analisi":"max 45 parole, tono da amico, concreto, dati alla mano","cambio":"max 25 parole: cosa cambia la prossima settimana e perché, oppure stringa vuota","prossima":{"titolo":"max 5 parole","focus":"...","scena":"una scena di conversazione realistica","missione":"una missione concreta per la vita vera","perche":"max 25 parole"}}`,{modelTier:"complex",cache:false});
+    const st=cleanStep(r.prossima,nextIdx);
+    if(nextIdx<steps.length) steps[nextIdx]=st; else steps.push(st);
+    G.reviews.push({d:today(),analisi:String(r.analisi||""),cambio:String(r.cambio||""),seen:false});cap(G.reviews,30);
+  }catch(e){goalErr="Il controllo è salvato, ma il Cervello non è riuscito a ragionarci. "+noClaudeMsg(e)}
+  goalBusy=false;save();if(tab==="oggi"||tab==="cervello")render();
+}
+async function createGoal(text,why){
+  goalBusy=true;goalErr="";render();
+  let steps=DEFAULT_PATH.map(cleanStep),misura="";
+  if(sample){
+    try{const r=await sample.json(`Sei il "Cervello" di un'app di allenamento. ${ctx()}
+Il ragazzo ha scritto il suo obiettivo: "${text}". Perché è importante: "${why||"non indicato"}".
+Costruisci un percorso di 4 settimane, dal più facile al più vicino all'obiettivo vero. Ogni settimana ha un solo focus tra: parlare (leggere e raccontare a voce), parole (trovare le parole giuste), memoria, dialogo (conversazioni simulate), studio. La scena e la missione devono essere legate al suo obiettivo e alla sua vita reale.
+Rispondi SOLO con JSON: {"obiettivo":"il suo obiettivo riscritto chiaro e misurabile, max 15 parole","passi":[{"titolo":"max 5 parole","focus":"...","scena":"...","missione":"...","perche":"max 25 parole"}]}`,{modelTier:"complex",cache:false});
+      if(Array.isArray(r.passi)&&r.passi.length>=3) steps=r.passi.slice(0,4).map(cleanStep);
+      if(r.obiettivo) misura=String(r.obiettivo).slice(0,140);
+    }catch(e){goalErr="Ho usato il percorso standard: "+noClaudeMsg(e)}
+  }
+  S.goal={text:misura||text,orig:text,why,start:today(),steps,checkins:[],reviews:[]};
+  goalBusy=false;save();toast("Percorso creato. Ora una domanda veloce.");go("oggi");
+}
+function goalCervelloHTML(){
+  if(goalBusy) return `<div class="card brain"><p><span class="spin"></span> Il Cervello sta costruendo il tuo percorso…</p></div>`;
+  if(!S.goal) return `<div class="card brain"><h2>Il mio obiettivo</h2><p class="small muted">Scrivilo con parole tue, anche semplici. Il Cervello lo trasforma in 4 settimane di allenamento e ogni settimana controlla se ti sta servendo davvero.</p>
+    <label for="gtext">Cosa vuoi riuscire a fare?</label><textarea id="gtext" maxlength="200" placeholder="es. parlare in italiano al lavoro senza bloccarmi"></textarea>
+    <label for="gwhy">Perché è importante per te?</label><input id="gwhy" maxlength="150" placeholder="es. voglio sentirmi sicuro quando parlo con i clienti">
+    <button class="btn wide" id="gmake">Crea il mio percorso</button>${goalErr?`<p class="no small">${esc(goalErr)}</p>`:""}</div>`;
+  const w=goalWeek(), R=S.goal.reviews.slice(-1)[0];
+  return `<div class="card brain"><p class="eyebrow">Il mio obiettivo</p><h2>${esc(S.goal.text)}</h2>${S.goal.why?`<p class="small muted">Perché: ${esc(S.goal.why)}</p>`:""}
+    <div class="plan">${S.goal.steps.map((s,i)=>`<div class="pitem ${i<w?"done":""}"><span class="tick">${i<w?"✓":i+1}</span><div><div class="pn">${esc(s.titolo)}</div><div class="small muted">${esc(FOCUS[s.focus])} · scena: ${esc(s.scena)}</div></div>${i===w?'<span class="tag w">ora</span>':""}</div>`).join("")}</div>
+    ${R?`<p class="small"><b>Ultimo ragionamento:</b> ${esc(R.analisi)}</p>`:""}
+    <p class="small muted">Ogni 7 giorni, in Oggi, ti chiedo com'è andata nella vita vera. Il Cervello usa la risposta per cambiare la settimana dopo.</p>
+    ${goalConfirm?`<div class="two"><button class="btn" id="gdel">Sì, ricomincia</button><button class="btn ghost" id="gno">Annulla</button></div>`:`<button class="x" id="gchange" style="align-self:flex-start;padding-left:0">Cambia obiettivo</button>`}</div>`;
+}
+function wireGoalCervello(){
+  const q=s=>app.querySelector(s);
+  const m=q("#gmake");if(m)m.onclick=()=>{const t=q("#gtext").value.trim();if(!t){q("#gtext").focus();return}createGoal(t,q("#gwhy").value.trim())};
+  const c=q("#gchange");if(c)c.onclick=()=>{goalConfirm=true;render()};
+  const n=q("#gno");if(n)n.onclick=()=>{goalConfirm=false;render()};
+  const d=q("#gdel");if(d)d.onclick=()=>{S.oldGoals=(S.oldGoals||[]).concat([S.goal]).slice(-5);S.goal=null;goalConfirm=false;save();render()};
+}
+function minuteHTML(){
+  const did=!!S.days[today()];
+  if(!S.anchor) return `<div class="card brain"><h2>Il tuo momento</h2>
+    <p class="small muted">Le abitudini partono da qualcosa che fai già ogni giorno. Scegli il momento: subito dopo, apri l'app e fai 1 minuto. Solo 1.</p>
+    <p style="font-weight:500">Dopo che…</p><div class="chips">${ANCORE.map(a=>`<button data-anc="${esc(a)}">${esc(a)}</button>`).join("")}</div>
+    <input id="anc" maxlength="60" placeholder="oppure scrivi tu: es. torno dal lavoro"><button class="btn soft" id="ancb">Salva il mio momento</button></div>`;
+  return `<div class="card brain"><p class="eyebrow">Il tuo patto</p><p style="font-size:1.1rem">Dopo che <b>${esc(S.anchor)}</b>, faccio 1 minuto.</p>
+    <button class="btn wide" id="min" style="min-height:64px;font-size:1.15rem">${did?"Ancora 1 minuto":"Fai il tuo minuto"}</button>
+    <button class="x" id="ancedit" style="align-self:flex-start;padding-left:0">Cambia momento</button></div>`;
+}
+function afterHTML(){
+  const tom=S.dict.filter(x=>(x.due||today())<=addDays(1)).length;
+  return `<div class="card brain"><h2>E adesso?</h2><p class="small muted">Hai finito. Scegli tu come continuare, oppure fermati: anche il riposo fa parte dell'allenamento, perché il cervello fissa quello che hai imparato mentre dormi.</p>
+  <div class="stack">
+    <button class="gcard" id="extra"><span class="tag w">punti doppi</span><b>Sfida extra</b><span>2 giochi nuovi, mescolati${sample?", con il Cervello":""}</span></button>
+    ${sample?`<button class="gcard" data-after="conversazione"><span class="tag">parlare</span><b>Conversazione</b><span>Allenati a una scena vera: bar, telefono, colloquio, amici</span></button>
+    <button class="gcard" data-after="studia"><span class="tag">studio</span><b>Studia un argomento</b><span>Una cosa per la scuola o per il lavoro: punti chiave e domande</span></button>`:""}
+  </div>${tom?`<p class="small muted">Domani ti aspettano ${tom} ${tom===1?"cosa":"cose"} da ripassare.</p>`:""}</div>`;
+}
+function rOggi(){
+  const t=today(), h=new Date().getHours(), lvl=Math.floor(S.xp/100)+1, inLvl=S.xp%100;
+  if(!S.mission||S.mission.d!==t){const pool=MISSIONI.concat(S.extra.missioni),dn=Math.floor(Date.now()/864e5),st=curStep();S.mission={d:t,text:st&&dn%2===0?st.missione:pool[dn%pool.length],done:false};save()}
+  const hasEnergy=S.energy&&S.energy.d===t;
+  if(hasEnergy&&(!S.plan||S.plan.d!==t)){S.plan=makePlan({stanco:2,normale:3,carico:4}[S.energy.v]);save()}
+  const plan=hasEnergy?S.plan:null;
+  const left=plan?plan.items.filter(x=>!x.done):[];
+  const mins=left.reduce((a,x)=>a+GAMES[x.g].min,0);
+  app.innerHTML=`<div class="hello"><p class="eyebrow">${new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})}</p><h1>${h<12?"Buongiorno":h<18?"Buon pomeriggio":"Buonasera"}</h1></div>
+  ${goalTodayHTML()}
+  ${minuteHTML()}
+  <div class="card"><div class="row between"><div class="row" style="gap:8px;align-items:baseline"><span class="big">${streak()}</span><span class="muted">${streak()===1?"giorno":"giorni"} di fila</span></div><span class="tag">Livello ${lvl}</span></div>
+  <div class="bar" aria-label="${inLvl} punti su 100"><i style="width:${inLvl}%"></i></div><p class="small muted">${100-inLvl} punti al livello ${lvl+1}</p></div>
+  ${!hasEnergy?`<div class="card"><h2>Hai più tempo?</h2><p class="small muted">Dimmi come ti senti e ti preparo un percorso più lungo.</p>
+    <div class="energy"><button data-e="stanco">Stanco<span>2 giochi</span></button><button data-e="normale">Normale<span>3 giochi</span></button><button data-e="carico">Carico<span>4 giochi</span></button></div></div>`
+  :`<div class="card"><div class="row between"><h2>Il percorso di oggi</h2><span class="muted small">${left.length?"circa "+mins+" min":"completato"}</span></div>
+    <div class="plan">${plan.items.map((x,i)=>`<div class="pitem ${x.done?"done":""}"><span class="tick">${x.done?"✓":""}</span><div><div class="pn">${esc(GAMES[x.g].n)}</div><div class="small muted">${esc(GAMES[x.g].d)}</div></div>${x.done?"":`<button class="btn ghost sm" data-swap="${i}" aria-label="Cambia ${esc(GAMES[x.g].n)}">Cambia</button>`}</div>`).join("")}</div>
+    ${left.length?`<button class="btn wide" id="start">${left.length<plan.items.length?"Continua":"Inizia"}</button>`:`<p class="ok">${plan.extra?"Sfida extra completata.":"Percorso completato. Ottimo lavoro."}</p>`}</div>`}
+  ${hasEnergy&&!left.length?afterHTML():""}
+  <div class="card"><div class="row between"><h2>Missione${(S.mission.n||1)>1?" "+S.mission.n:""} di oggi</h2><span class="tag w">vita vera</span></div><p>${esc(S.mission.text)}</p>
+    ${S.mission.done?`<p class="ok">Fatta! +20 punti</p>${(S.mission.n||1)<3?`<button class="btn ghost wide" id="mis2">Dammi un'altra missione</button>`:`<p class="small muted">Per oggi le missioni sono finite. Domani ne arrivano di nuove.</p>`}`:`<button class="btn soft wide" id="mis">L'ho fatta</button>`}</div>
+  <div class="card brain"><div class="row between"><h2>Il Cervello</h2>${S.tip&&S.tip.d===t?"":`<button class="btn sm" id="tip">Consiglio di oggi</button>`}</div>
+    <p id="tiptext">${esc(S.tip&&S.tip.d===t?S.tip.text:hint())}</p></div>`;
+  app.querySelectorAll("[data-e]").forEach(b=>b.onclick=()=>{S.energy={d:t,v:b.dataset.e};S.plan=makePlan({stanco:2,normale:3,carico:4}[b.dataset.e]);save();render()});
+  app.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>{swapItem(+b.dataset.swap);render()});
+  const st=app.querySelector("#start");if(st)st.onclick=()=>{const i=plan.items.findIndex(x=>!x.done);play(plan.items[i].g,i)};
+  wireGoalToday();
+  const setA=v=>{v=String(v||"").trim();if(!v)return;S.anchor=v;save();toast("Fatto. Il tuo momento: dopo che "+v);render()};
+  app.querySelectorAll("[data-anc]").forEach(b=>b.onclick=()=>setA(b.dataset.anc));
+  const ab=app.querySelector("#ancb");if(ab)ab.onclick=()=>setA(app.querySelector("#anc").value);
+  const ae=app.querySelector("#ancedit");if(ae)ae.onclick=()=>{S.anchor="";save();render()};
+  const mn=app.querySelector("#min");if(mn)mn.onclick=()=>play("minuto",null);
+  const ex=app.querySelector("#extra");if(ex)ex.onclick=()=>{S.plan=makePlan(2,true);save();play(S.plan.items[0].g,0)};
+  app.querySelectorAll("[data-after]").forEach(b=>b.onclick=()=>play(b.dataset.after,null));
+  const mi=app.querySelector("#mis");if(mi)mi.onclick=()=>{S.mission.done=true;S.xp+=20;bump();save();toast("+20 punti. Questa vale doppio: è la vita vera.");render()};
+  const m2=app.querySelector("#mis2");if(m2)m2.onclick=()=>{const pool=MISSIONI.concat(S.extra.missioni).filter(x=>x!==S.mission.text);S.mission={d:t,text:pick(pool),done:false,n:(S.mission.n||1)+1};save();render()};
+  const tp=app.querySelector("#tip");if(tp){
+    if(sampleChecked&&!sample)tp.hidden=true;
+    tp.onclick=async()=>{if(!sample)return;tp.disabled=true;const el=app.querySelector("#tiptext");el.innerHTML='<span class="spin"></span> Ci penso…';
+      try{const r=await sample.json(`Sei il "Cervello" di un'app che allena a parlare italiano a voce e la memoria. ${ctx()}
+Ultimi giochi: ${S.games.slice(-12).map(x=>x.g+(x.b?"(annoiato)":"(voto "+x.r+")")).join(", ")||"nessuno"}.
+Scrivi UN consiglio per oggi: concreto, basato sui dati, in 2 frasi brevi e semplici, tono da amico, senza emoji. Rispondi SOLO con JSON {"consiglio":"..."}`,{modelTier:"quick"});
+        S.tip={d:t,text:String(r.consiglio||hint())};save();render()}
+      catch(e){el.textContent=noClaudeMsg(e);tp.disabled=false}}
+  }
+}
+
+/* ================= GIOCHI ================= */
+function rGiochi(){
+  const due=dueCards().length;
+  app.innerHTML=`<div class="hello"><p class="eyebrow">Giochi</p><h1>Scegli tu</h1></div>
+  <p class="muted">Ogni gioco dura 2 o 3 minuti. Cambiare spesso tipo di esercizio aiuta a ricordare meglio e a non annoiarsi.</p>
+  <div class="ggrid">${Object.keys(GAMES).filter(g=>!GAMES[g].hidden&&(!GAMES[g].ai||sample||!sampleChecked)).map(g=>`<button class="gcard" data-g="${g}"><span class="tag ${GAMES[g].cat==="memoria"?"w":""}">${GAMES[g].cat}</span><b>${esc(GAMES[g].n)}</b><span>${esc(GAMES[g].d)}${g==="ripasso"?` · ${due} da fare`:""}</span></button>`).join("")}</div>
+  <details><summary>Frasi salvagente</summary><p class="muted small" style="margin-top:8px">Quando le parole si mischiano, fermarsi va bene. Queste frasi ti danno tempo senza perdere il filo:</p><ul>${SALVAGENTE.map(x=>`<li>${x}</li>`).join("")}</ul></details>`;
+  app.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>play(b.dataset.g,null));
+}
+
+/* ================= DIALETTO ================= */
+let dRes=null;
+function addCard(dial,it,pezzi){S.dict.push({dial,it,pezzi,ts:Date.now(),box:0,due:addDays(1)})}
+function rDial(){
+  app.innerHTML=`<div class="hello"><p class="eyebrow">Dialetto → Italiano</p><h1>Come lo diresti tu</h1></div>
+  <p class="muted">Scrivi una frase come ti viene, anche in dialetto o mischiata. Ricevi l'italiano diviso in pezzi. Se la salvi, torna nel Ripasso dopo 1, 3, 7, 14 e 30 giorni: è il modo più efficace per non dimenticarla.</p>
+  <div class="card"><label for="dtxt">La tua frase</label><p class="small muted">Puoi anche dettarla: tocca il microfono sulla tastiera e parla come ti viene.</p><textarea id="dtxt" maxlength="400" placeholder="Scrivi qui…"></textarea>
+    <label for="dname">Che dialetto è? <span class="muted small">(facoltativo)</span></label><input id="dname" maxlength="40" placeholder="es. marchigiano" value="${esc(S.dialetto||"")}">
+    ${hasVoice()?micHTML("recd","Dilla a voce, come ti viene"):""}<button class="btn wide ${hasVoice()?"ghost":""}" id="tr">${hasVoice()?"Trasforma il testo scritto":"Trasforma in italiano"}</button><p id="trmsg" class="small muted" hidden></p></div>
+  <div id="res"></div><div id="manual"></div>
+  <div class="card"><div class="row between"><h2>Le mie frasi</h2><span class="muted small">${S.dict.filter(x=>x.kind!=="studio").length}</span></div>
+  ${S.dict.some(x=>x.kind!=="studio")?`<div class="dict">${S.dict.map((x,i)=>[x,i]).filter(([x])=>x.kind!=="studio").reverse().map(([x,i])=>`<div class="item"><div><div>${esc(x.it)}</div><div class="d">${x.dial?esc(x.dial)+" · ":""}prossimo ripasso ${x.due<=today()?"oggi":new Date(x.due).toLocaleDateString("it-IT",{day:"numeric",month:"short"})}</div></div><button class="x" data-del="${i}">Elimina</button></div>`).join("")}</div>`
+  :`<p class="muted small">Ancora vuoto.</p>`}</div>`;
+  const tr=app.querySelector("#tr"),msg=app.querySelector("#trmsg"),res=app.querySelector("#res");
+  app.querySelector("#dname").onchange=e=>{S.dialetto=e.target.value.trim();save()};
+  app.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S.dict.splice(+b.dataset.del,1);save();render()});
+  if(sampleChecked&&!sample){tr.disabled=true;msg.hidden=false;msg.textContent="Il Cervello non è ancora collegato. Puoi scrivere tu l'italiano qui sotto.";
+    app.querySelector("#manual").innerHTML=`<div class="card"><label for="mit">Versione in italiano</label><input id="mit" maxlength="300"><button class="btn soft wide" id="msave">Salva nel ripasso</button></div>`;
+    app.querySelector("#msave").onclick=()=>{const it=app.querySelector("#mit").value.trim();if(!it)return;addCard(app.querySelector("#dtxt").value.trim(),it,autoChunk(it));save();render()}}
+  const showRes=()=>{if(!dRes)return;
+    res.innerHTML=`<div class="card result"><p class="eyebrow">In italiano</p><p class="it">${dRes.pezzi.map(esc).join(' <span class="sep">/</span> ')}</p>
+    ${dRes.parole.map(p=>`<div class="pair"><span class="muted">${esc(p.dialetto)}</span><span>→</span><span>${esc(p.italiano)}</span></div>`).join("")}
+    ${dRes.consiglio?`<p class="small muted">${esc(dRes.consiglio)}</p>`:""}
+    <button class="btn soft wide" id="keep" ${dRes.saved?"disabled":""}>${dRes.saved?"Salvata nel ripasso":"Salva nel ripasso"}</button></div>`;
+    res.querySelector("#keep").onclick=()=>{addCard(dRes.src,dRes.italiano,dRes.pezzi);dRes.saved=true;save();render()}};
+  showRes();
+  const rd=app.querySelector("#recd");if(rd)rd.onclick=()=>toggleRec(rd,async a=>{
+    const dn=app.querySelector("#dname").value.trim();msg.hidden=false;msg.innerHTML='<span class="spin"></span> Ti ascolto e ci penso…';
+    try{const r=await sample.json(`Un ragazzo di 18 anni con DSA ha detto a voce una frase, spesso in dialetto${dn?" ("+dn+")":""} o mischiando dialetto e italiano. Ascolta l'audio allegato.
+In "sentito" scrivi la trascrizione fedele di quello che ha detto, anche le parole in dialetto. Poi trasformala in italiano parlato, corretto e naturale (non troppo formale), mantenendo il significato. Dividi la frase italiana in pezzi da 2-5 parole secondo le pause del respiro. Elenca al massimo 4 parole o espressioni dialettali o sbagliate con la forma italiana. Aggiungi un consiglio breve (max 15 parole) e incoraggiante, oppure stringa vuota.
+Rispondi SOLO con JSON: {"sentito":"...","italiano":"...","pezzi":["..."],"parole":[{"dialetto":"...","italiano":"..."}],"consiglio":"..."}`,{audio:a});
+      const it=String(r&&r.italiano||"").trim();if(!it)throw {};
+      dRes={src:String(r.sentito||""),italiano:it,pezzi:Array.isArray(r.pezzi)&&r.pezzi.length?r.pezzi.map(String):autoChunk(it),parole:(r.parole||[]).filter(p=>p&&p.dialetto&&p.italiano).slice(0,4),consiglio:String(r.consiglio||"")};
+      msg.hidden=true;speak(it);render();
+    }catch(e){toast(noClaudeMsg(e));render()}
+  },30);
+  tr.onclick=async()=>{const t=app.querySelector("#dtxt").value.trim();if(!t||!sample)return;
+    const dn=app.querySelector("#dname").value.trim();if(dn!==S.dialetto){S.dialetto=dn;save()}
+    tr.disabled=true;msg.hidden=false;msg.innerHTML='<span class="spin"></span> Ci penso…';
+    try{const r=await sample.json(`Un ragazzo di 18 anni con DSA scrive frasi come le direbbe a voce, spesso in dialetto${dn?" ("+dn+")":""} o mischiando dialetto e italiano. Trasforma la frase in italiano parlato, corretto e naturale (non troppo formale), mantenendo il significato. Dividi la frase italiana in pezzi da 2-5 parole secondo le pause del respiro. Elenca al massimo 4 parole o espressioni dialettali o sbagliate con la forma italiana. Aggiungi un consiglio breve (max 15 parole) e incoraggiante sul ritmo o sulla pronuncia, oppure stringa vuota. Frase: """${t}"""
+Rispondi SOLO con JSON: {"italiano":"...","pezzi":["..."],"parole":[{"dialetto":"...","italiano":"..."}],"consiglio":"..."}`,{modelTier:"quick"});
+      const it=String(r&&r.italiano||"").trim();if(!it)throw{};
+      dRes={src:t,italiano:it,pezzi:Array.isArray(r.pezzi)&&r.pezzi.length?r.pezzi.map(String):autoChunk(it),parole:(r.parole||[]).filter(p=>p&&p.dialetto&&p.italiano).slice(0,4),consiglio:String(r.consiglio||"")};
+      msg.hidden=true;tr.disabled=false;showRes()}
+    catch(e){tr.disabled=false;msg.textContent=noClaudeMsg(e)}};
+}
+
+/* ================= CERVELLO ================= */
+let chatBusy=false;
+function rCervello(){
+  const off=sampleChecked&&!sample;
+  app.innerHTML=`<div class="hello"><p class="eyebrow">Il Cervello</p><h1>Il tuo allenatore</h1></div>
+  <p class="muted">Il Cervello ti ascolta e ragiona con l'intelligenza artificiale. Guarda come vai, crea esercizi sui tuoi interessi e ti aiuta a trovare il metodo giusto anche per studiare.</p>
+  ${off?`<p class="note">Il Cervello non è ancora collegato (manca la chiave Gemini). Gli altri giochi funzionano lo stesso.</p>`:""}
+  ${goalCervelloHTML()}
+  ${voiceCardHTML(curStep()?curStep().scena:"una conversazione tra amici su cosa ho fatto oggi")}
+  <div class="card"><h2>Cosa ti piace?</h2><p class="small muted">Più è preciso, più gli esercizi saranno tuoi.</p>
+    <textarea id="int" maxlength="300" placeholder="es. Minecraft, video e montaggio, calcio, la festa del paese…">${esc(S.interessi)}</textarea>
+    <button class="btn wide" id="gen" ${off?"disabled":""}>Crea esercizi nuovi su questi argomenti</button><p id="genmsg" class="small muted" hidden></p></div>
+  <div class="card"><h2>Chiedi al Cervello</h2>
+    <div class="chips">${["Ho una verifica, come studio?","Spiegami un argomento in modo semplice","Mi annoio subito, cosa faccio?","Aiutami a preparare cosa dire"].map(x=>`<button data-chip="${esc(x)}">${esc(x)}</button>`).join("")}</div>
+    <div class="chat" id="chat">${S.chat.map(m=>`<div class="msg ${m.role==="user"?"me":"ai"}">${esc(m.content)}</div>`).join("")}</div>
+    <textarea id="q" maxlength="800" placeholder="Scrivi qui, anche in dialetto…"></textarea>
+    <div class="two"><button class="btn" id="send" ${off?"disabled":""}>Invia</button><button class="btn ghost" id="clr" ${S.chat.length?"":"disabled"}>Nuova chat</button></div></div>
+  <details><summary>Come funziona l'app (i metodi)</summary><ul>
+    <li><b>Ricordare invece di rileggere.</b> Ogni gioco ti fa tirare fuori la risposta dalla testa: è il metodo di studio con più prove scientifiche.</li>
+    <li><b>Ripasso distanziato.</b> Le tue frasi tornano dopo 1, 3, 7, 14 e 30 giorni, così passano nella memoria lunga.</li>
+    <li><b>Giochi mescolati.</b> Il percorso alterna parlare, parole e memoria: mescolare aiuta a imparare e a non annoiarsi.</li>
+    <li><b>La rete delle parole.</b> Ragnatela e Indovina allenano a ritrovare la parola giusta, come fanno i logopedisti.</li>
+    <li><b>Scegli tu.</b> Puoi cambiare ogni gioco e dire quando ti annoi: l'app impara cosa funziona per te.</li>
+    <li><b>Il tuo obiettivo guida tutto.</b> Il percorso settimanale sceglie più spesso i giochi utili per quella settimana, e la scena e la missione sono legate a quello che vuoi ottenere.</li>
+    <li><b>Si misura la vita vera.</b> Ogni settimana dici com'è andata parlando con le persone. Il Cervello confronta questo con come hai usato l'app e corregge la settimana dopo.</li>
+    <li><b>Vita vera.</b> La missione del giorno porta l'allenamento fuori dal telefono, dove serve.</li></ul></details>`;
+  wireGoalCervello();wireVoice();
+  app.querySelector("#int").onchange=e=>{S.interessi=e.target.value.trim();save()};
+  app.querySelectorAll("[data-chip]").forEach(b=>b.onclick=()=>{const q=app.querySelector("#q");q.value=b.dataset.chip;q.focus()});
+  app.querySelector("#clr").onclick=()=>{S.chat=[];save();render()};
+  const gb=app.querySelector("#gen"),gm=app.querySelector("#genmsg");
+  gb.onclick=async()=>{if(!sample)return;S.interessi=app.querySelector("#int").value.trim();save();
+    gb.disabled=true;gm.hidden=false;gm.innerHTML='<span class="spin"></span> Preparo gli esercizi…';
+    const len={1:"4-6 parole",2:"7-10 parole",3:"11-15 parole",4:"15-20 parole",5:"20-26 parole"}[S.speak.lvl];
+    try{const r=await sample.json(`Sei un logopedista creativo. ${ctx()}
+Crea esercizi in italiano parlato, corretto e naturale, legati ai suoi interessi (se non indicati, vita di tutti i giorni di un ragazzo):
+- "frasi": 5 frasi da leggere a voce alta, ${len} ciascuna, divise in pezzi da 2-5 parole secondo le pause del respiro.
+- "indovina": 3 parole comuni (una parola sola, minuscola), ognuna con 5 indizi brevi dal più vago al più preciso, senza mai contenere la parola.
+- "spiega": 3 parole da spiegare a voce, ognuna con 2 parole vietate ovvie.
+- "missione": 1 sfida piccola da fare oggi nella vita vera parlando in italiano con qualcuno, in una frase.
+Rispondi SOLO con JSON: {"frasi":[{"pezzi":["..."]}],"indovina":[{"w":"...","c":["..."]}],"spiega":[{"w":"...","no":["...","..."]}],"missione":"..."}`,{modelTier:"default"});
+      const E=S.extra;let n=0;
+      (r.frasi||[]).forEach(f=>{if(Array.isArray(f.pezzi)&&f.pezzi.length){E.frasi.push({lvl:S.speak.lvl,pezzi:f.pezzi.map(String)});n++}});
+      (r.indovina||[]).forEach(x=>{if(x&&x.w&&Array.isArray(x.c)&&x.c.length>=3){E.indovina.push({w:String(x.w),c:x.c.map(String).slice(0,5)});n++}});
+      (r.spiega||[]).forEach(x=>{if(x&&x.w&&Array.isArray(x.no)){E.spiega.push({w:String(x.w),no:x.no.map(String).slice(0,2)});n++}});
+      if(r.missione){E.missioni.push(String(r.missione));if(S.mission&&!S.mission.done)S.mission.text=String(r.missione)}
+      cap(E.frasi,60);cap(E.indovina,40);cap(E.spiega,40);cap(E.missioni,20);save();
+      gb.disabled=false;gm.textContent=`Fatto: ${n} esercizi nuovi aggiunti ai giochi${r.missione?" e una missione nuova per oggi":""}.`}
+    catch(e){gb.disabled=false;gm.textContent=noClaudeMsg(e)}};
+  const send=app.querySelector("#send");
+  send.onclick=async()=>{const qEl=app.querySelector("#q"),q=qEl.value.trim();if(!q||!sample||chatBusy)return;
+    chatBusy=true;send.disabled=true;S.chat.push({role:"user",content:q});cap(S.chat,20);qEl.value="";
+    const chat=app.querySelector("#chat");chat.insertAdjacentHTML("beforeend",`<div class="msg me">${esc(q)}</div><div class="msg ai" id="live">…</div>`);
+    const live=document.getElementById("live");live.scrollIntoView({block:"nearest"});
+    const sys=`Sei il "Cervello", un allenatore di studio e di parola per questo ragazzo. ${ctx()}
+Regole: rispondi in italiano semplice; frasi corte; massimo 120 parole salvo richiesta; usa elenchi numerati brevi quando spieghi passi; niente emoji; tono da amico, mai da professore. Se chiede come studiare, proponi metodi con prove scientifiche (ricordare a memoria con domande, ripasso distanziato, mappe, spiegare a voce) adattati a DSA e a chi si annoia: sessioni brevi, varietà, piccoli obiettivi. Se scrive in dialetto, rispondi in italiano e, se utile, mostragli come dirlo in italiano. Se parla di problemi di salute o di forte disagio, consiglia con gentilezza di parlarne con un medico o una persona di fiducia.`;
+    const msgs=S.chat.map((m,i)=>({role:m.role,content:i===0?sys+"\n\nMessaggio: "+m.content:m.content}));
+    try{const r=await sample(msgs,{cache:false,onText:u=>{live.textContent=u.text}});
+      S.chat.push({role:"assistant",content:r.text});cap(S.chat,20);save();live.removeAttribute("id")}
+    catch(e){S.chat.pop();live.textContent=noClaudeMsg(e);live.removeAttribute("id");save()}
+    chatBusy=false;send.disabled=false;const c=app.querySelector("#clr");if(c)c.disabled=!S.chat.length};
+}
+
+/* ================= PROGRESSI ================= */
+function goalProgHTML(){
+  if(!S.goal||!S.goal.checkins.length) return `<div class="card"><h2>Nella vita vera</h2><p class="small muted">Qui vedrai come cambia, settimana dopo settimana, la facilità a parlare italiano con le persone. ${S.goal?"Il primo dato arriva dal controllo in Oggi.":"Prima scrivi il tuo obiettivo nel Cervello."}</p></div>`;
+  const c=S.goal.checkins.slice(-8), first=S.goal.checkins[0].score, last=c[c.length-1].score, diff=last-first;
+  return `<div class="card"><h2>Nella vita vera</h2><p class="muted small">Quanto ti viene facile parlare italiano con le persone, da 1 a 5</p>
+    <div class="bars" style="grid-template-columns:repeat(${c.length},1fr);height:120px" role="img" aria-label="Facilità a parlare, ultime ${c.length} settimane">${c.map((x,i)=>`<div class="${i===c.length-1?"today":""}" style="height:${x.score/5*100}%"></div>`).join("")}</div>
+    <div class="blabels" style="grid-template-columns:repeat(${c.length},1fr)">${c.map(x=>`<span>${x.week===0&&x===S.goal.checkins[0]?"Inizio":"Sett. "+x.week}</span>`).join("")}</div>
+    <p>${S.goal.checkins.length<2?"Questo è il tuo punto di partenza.":diff>0?`Da quando hai iniziato sei salito di ${diff} ${diff===1?"punto":"punti"}.`:diff<0?"Ultimamente è più dura. Il Cervello ha adattato il percorso.":"Sei stabile rispetto all'inizio. I cambiamenti veri richiedono qualche settimana."}</p></div>`;
+}
+function rProg(){
+  const days=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(iso(d))}
+  const vals=days.map(d=>S.days[d]||0),mx=Math.max(3,...vals),p=prefs(),tot=S.games.filter(x=>!x.b).length;
+  const boxes=[0,0,0,0,0];S.dict.forEach(x=>boxes[x.box||0]++);
+  app.innerHTML=`<div class="hello"><p class="eyebrow">Progressi</p><h1>Come stai andando</h1></div>
+  <div class="stats"><div class="stat"><b>${Math.floor(S.xp/100)+1}</b><span>livello (${S.xp} punti)</span></div><div class="stat"><b>${S.speak.lvl}/5</b><span>lettura a voce</span></div><div class="stat"><b>${S.mem.best}</b><span>sequenza più lunga</span></div></div>
+  ${goalProgHTML()}
+  <div class="card"><h2>Ultimi 14 giorni</h2><p class="muted small">Attività completate ogni giorno</p>
+    <div class="bars" role="img" aria-label="Attività negli ultimi 14 giorni">${vals.map((v,i)=>`<div class="${v?"":"zero"} ${i===13?"today":""}" style="height:${v?Math.max(8,v/mx*100):2}%"></div>`).join("")}</div>
+    <div class="blabels">${days.map(d=>`<span>${+d.slice(8)}</span>`).join("")}</div></div>
+  <div class="card"><h2>Cosa ha capito l'app di te</h2>
+    <p>${tot?`Hai completato ${tot} ${tot===1?"gioco":"giochi"}.`:"Ancora nessun gioco: inizia da Oggi."}</p>
+    ${p.liked.length?`<p>Fai più spesso: <b>${p.liked.map(esc).join(", ")}</b>.</p>`:""}
+    ${p.bored.length?`<p>Ti annoiano: <b>${p.bored.map(esc).join(", ")}</b>. Te li propongo meno.</p>`:""}
+    ${S.dict.length?`<p>Frasi nel ripasso: ${S.dict.length}. Ben fissate (ricordate 3 o più volte): ${boxes[3]+boxes[4]}.</p>`:""}</div>
+  <p class="small muted">I progressi sono salvati sul telefono e online, protetti dal tuo codice.</p>`;
+}
+
+if(!CODE)renderLogin();else{render();boot()}
+if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});
+</script>
+</body>
+</html>
