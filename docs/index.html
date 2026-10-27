@@ -473,6 +473,26 @@ body{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .endhead .eco{margin:6px auto 4px}
 .msg.ai::before{background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.9) 0,transparent 35%),radial-gradient(circle,var(--o1),var(--o2) 80%);border-radius:50%;width:24px;height:24px;left:-32px}
 @media (prefers-reduced-motion:reduce){.eco,.eco i{animation:none!important}}
+/* ===== giochi di memoria ===== */
+.memgrid{display:grid;gap:8px}
+.mcard{position:relative;min-height:74px;border:0;border-radius:16px;padding:0;background:transparent;perspective:600px}
+.mcard .back,.mcard .front{position:absolute;inset:0;border-radius:16px;display:grid;place-items:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;transition:transform .45s var(--ease)}
+.mcard .back{background:linear-gradient(135deg,var(--c-memoria),color-mix(in srgb,var(--c-memoria) 65%,#fff));transform:rotateY(0)}
+.mcard .back::after{content:"";width:22px;height:22px;border-radius:50%;border:3px solid rgba(255,255,255,.7)}
+.mcard .front{background:color-mix(in srgb,var(--fg) 5%,var(--surface));color:var(--fg);font-weight:600;font-size:.98rem;padding:6px;text-align:center;line-height:1.2;transform:rotateY(180deg)}
+.mcard.up .back{transform:rotateY(-180deg)}
+.mcard.up .front{transform:rotateY(0)}
+.mcard.ok .front{background:var(--accent-soft);color:var(--accent);animation:pop .4s var(--spring)}
+.wordgrid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.wordgrid span{background:color-mix(in srgb,var(--fg) 5%,var(--surface));padding:10px 16px;border-radius:14px;font-size:1.15rem;font-weight:600;animation:pop .35s var(--spring) both}
+.wordgrid span:nth-child(2){animation-delay:.05s}.wordgrid span:nth-child(3){animation-delay:.1s}.wordgrid span:nth-child(4){animation-delay:.15s}.wordgrid span:nth-child(5){animation-delay:.2s}.wordgrid span:nth-child(n+6){animation-delay:.25s}
+.wordgrid .hole{background:var(--warm-soft);color:var(--warm);min-width:60px;text-align:center}
+.placerow{display:flex;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--fg) 4%,var(--surface));font-size:1.05rem}
+.placerow span{color:var(--c-memoria);font-weight:600;text-align:right}
+.storytext{font-size:1.2rem;line-height:1.7}
+.btn.right{background:var(--accent)!important;color:var(--on-accent)!important}
+.btn.wrong{background:var(--bad)!important;color:#fff!important}
+
 </style>
 </head>
 <body>
@@ -530,6 +550,29 @@ const MISSIONI=["Quando ordini qualcosa oggi, dillo in italiano con una frase in
 const SALVAGENTE=["Aspetta, ci penso un attimo.","Come si dice… ah, ecco.","Te lo dico in un altro modo.","Ricomincio da capo: …","In pratica, voglio dire che…","Non mi viene la parola, è quella cosa che…"];
 const PAROLE="casa mela treno sedia gatto libro pane lago chiave fiore ponte sole tazza borsa latte nave cane porta vaso neve bosco piatto letto vento sale foglia scarpa lampada uovo castagna campana finestra strada nuvola zaino".split(" ");
 const BOX_DAYS=[1,3,7,14,30];
+/* ---- contenuti dei nuovi giochi di memoria ---- */
+const COPPIE=[["chiave","porta"],["pane","forno"],["pioggia","ombrello"],["ago","filo"],["sole","occhiali da sole"],["cane","guinzaglio"],["treno","binario"],["neve","sci"],["mare","spiaggia"],["penna","quaderno"],["calcio","pallone"],["castagna","autunno"],["telefono","caricabatterie"],["martello","chiodo"],["dentifricio","spazzolino"],["lettera","busta"],["chitarra","corde"],["latte","biscotti"],["bicicletta","pedali"],["candela","fiammifero"]];
+const OGGETTI=["le chiavi","il portafoglio","gli occhiali","il telefono","le cuffie","lo zaino","l'ombrello","il quaderno","il caricabatterie","la giacca","il libro","la bottiglia"];
+const POSTI=["nel cassetto","sul tavolo","in macchina","sotto il letto","nella borsa","sullo scaffale","vicino alla porta","in cucina","sul divano","in bagno","in garage","sulla sedia"];
+const STORIE=[
+ {t:"Ieri mattina Marco è andato al bar della piazza. Ha ordinato un cappuccino e una brioche alla crema. Ha pagato tre euro e poi è andato a lavorare in bicicletta.",
+  q:[["Dove è andato Marco?",["al bar della piazza","al mercato","in farmacia"]],["Che brioche ha preso?",["alla crema","al cioccolato","vuota"]],["Come è andato a lavorare?",["in bicicletta","in macchina","a piedi"]]]},
+ {t:"Il signor Paolo ha perso il gatto, che si chiama Briciola. Il gatto è grigio con una macchia bianca sul naso. Lo ha ritrovato due giorni dopo, nascosto nel fienile del vicino.",
+  q:[["Come si chiama il gatto?",["Briciola","Fiocco","Neve"]],["Di che colore è?",["grigio","nero","arancione"]],["Dove l'ha ritrovato?",["nel fienile del vicino","in cantina","sul tetto"]]]},
+ {t:"Sabato sera Giulia ha organizzato una cena per il compleanno di suo fratello Luca. Erano in otto. Hanno mangiato le lasagne e una torta al limone. Alla fine hanno ballato fino a mezzanotte.",
+  q:[["Di chi era il compleanno?",["di Luca","di Giulia","di Paolo"]],["Quante persone c'erano?",["otto","sei","dieci"]],["Che torta hanno mangiato?",["al limone","al cioccolato","alla fragola"]]]},
+ {t:"Domenica c'è la sagra della castagna in paese. Si comincia alle tre del pomeriggio con la banda musicale. Alle cinque si accendono i bracieri e un cartoccio di caldarroste costa due euro. La sera c'è la lotteria.",
+  q:[["A che ora si comincia?",["alle tre","alle cinque","alle due"]],["Quanto costa un cartoccio?",["due euro","tre euro","un euro"]],["Cosa c'è la sera?",["la lotteria","i fuochi d'artificio","il cinema all'aperto"]]]},
+ {t:"Sara deve andare dal dentista martedì alle dieci e mezza. Prima deve passare in farmacia a prendere lo sciroppo per la nonna. Dopo il dentista, alle sei, ha l'allenamento di pallavolo.",
+  q:[["Quando va dal dentista?",["martedì alle dieci e mezza","lunedì alle dieci","martedì alle sei"]],["Cosa prende in farmacia?",["lo sciroppo per la nonna","le vitamine","i cerotti"]],["Che sport fa Sara?",["pallavolo","nuoto","calcio"]]]},
+ {t:"Per andare alla stazione esci dal portone e gira a destra. Cammina fino alla fontana, poi prendi la seconda strada a sinistra. La stazione è subito dopo il supermercato, sul lato destro.",
+  q:[["Appena esci dal portone, dove giri?",["a destra","a sinistra","vai dritto"]],["Dopo la fontana quale strada prendi?",["la seconda a sinistra","la prima a destra","la seconda a destra"]],["La stazione è subito dopo…",["il supermercato","la chiesa","la scuola"]]]},
+ {t:"Al lavoro il capo ha chiesto a Davide di preparare quaranta sedie per la riunione di giovedì. La riunione è nella sala grande al primo piano e comincia alle nove. Davide deve anche portare il proiettore.",
+  q:[["Quante sedie deve preparare?",["quaranta","trenta","cinquanta"]],["Dove si fa la riunione?",["nella sala grande al primo piano","al piano terra","in giardino"]],["Cosa deve portare Davide?",["il proiettore","il caffè","le penne"]]]},
+ {t:"Elena ha comprato al mercato un chilo di mele rosse, mezzo chilo di formaggio e un mazzo di fiori gialli per la mamma. Ha speso in tutto quindici euro e ha incontrato la sua vecchia maestra.",
+  q:[["Di che colore erano le mele?",["rosse","verdi","gialle"]],["Per chi erano i fiori?",["per la mamma","per la nonna","per la maestra"]],["Chi ha incontrato?",["la sua vecchia maestra","un'amica di scuola","il vicino di casa"]]]}
+];
+
 
 /* ================= STATO ================= */
 const KEY="voce-chiara-v1";
@@ -570,7 +613,7 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
-const APP_VERSION="v21";
+const APP_VERSION="v22";
 let AUDIO_OK=true;try{AUDIO_OK=localStorage.getItem("vc-noaudio")!=="1"}catch(e){}
 function setAudioOk(v){AUDIO_OK=v;try{v?localStorage.removeItem("vc-noaudio"):localStorage.setItem("vc-noaudio","1")}catch(e){}}
 let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
@@ -850,6 +893,10 @@ const GAMES={
   indovina:{n:"Indovina la parola",cat:"parole",d:"Arrivano gli indizi uno alla volta: dì la parola ad alta voce",min:2,easy:true},
   ragnatela:{n:"Ragnatela",cat:"parole",d:"Costruisci la rete di una parola: così la trovi più in fretta quando parli",min:3},
   sequenze:{n:"Sequenze",cat:"memoria",d:"Guarda, ricorda, rimetti in ordine",min:3,easy:true},
+  coppie:{n:"Coppie",cat:"memoria",d:"Gira le carte e trova le parole che vanno insieme",min:3,easy:true},
+  manca:{n:"Cosa manca?",cat:"memoria",d:"Guarda le parole: una sparisce, quale?",min:2,easy:true},
+  dove:{n:"Dove l'ho messo?",cat:"memoria",d:"Ricorda dove sono le cose, come nella vita di tutti i giorni",min:3},
+  storia:{n:"Ricorda la storia",cat:"memoria",d:"Leggi una storia breve, poi rispondi a chi, dove e quando",min:3},
   ripasso:{n:"Ripasso",cat:"ripasso",d:"Le tue frasi e le domande di studio, nel momento giusto per non dimenticarle",min:2},
   conversazione:{n:"Conversazione",cat:"dialogo",d:"Una scena vera: il Cervello fa l'altra persona e ti ascolta",min:5,ai:true},
   studia:{n:"Studia un argomento",cat:"studio",d:"Scrivi cosa devi imparare: punti chiave e domande",min:6,ai:true},
@@ -980,7 +1027,11 @@ const GICONS={
   ripasso:'<path d="M4 12a8 8 0 0 1 14-5.3L20 9"/><path d="M20 4v5h-5"/><path d="M20 12a8 8 0 0 1-14 5.3L4 15"/><path d="M4 20v-5h5"/>',
   conversazione:'<path d="M3 5h12v8H8l-4 3v-3H3z"/><path d="M15 9h6v8h-1v3l-4-3h-5v-2"/>',
   studia:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>',
-  minuto:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/>'
+  minuto:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/>',
+  coppie:'<rect x="3" y="5" width="9" height="13" rx="2"/><rect x="12" y="6" width="9" height="13" rx="2" transform="rotate(8 16.5 12.5)"/>',
+  manca:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke-dasharray="2 2"/>',
+  dove:'<path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/>',
+  storia:'<path d="M6 3h10a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2V5a2 2 0 0 1 2-2z"/><path d="M8 8h6M8 11h6M8 14h4"/>'
 };
 const gicon=g=>`<span class="gicon"><svg viewBox="0 0 24 24" aria-hidden="true">${GICONS[g]||GICONS.minuto}</svg></span>`;
 const catOf=g=>"cat-"+((GAMES[g]&&GAMES[g].cat)||"mini");
@@ -1234,6 +1285,118 @@ RENDER.sequenze=()=>{
   app.innerHTML=head(gs.ok?"Giusto!":"Quasi",sub)+`<div class="card">${gs.ok?"":`<p>L'ordine era: <b>${gs.seq.map(esc).join(" · ")}</b></p>`}${gs.note?`<p class="note">${esc(gs.note)}</p>`:""}
   <button class="btn wide" id="mn">${gs.round>=2?"Fine":"Prossima"}</button></div>`;
   app.querySelector("#mn").onclick=()=>{if(gs.round>=2){const g=gs.res.filter(Boolean).length;finish(g===3?2:g?1:0);return}const r=gs.round+1,res=gs.res;Object.assign(gs,memRound(),{round:r,res,phase:"show"});memTick()};
+};
+
+
+/* ================= NUOVI GIOCHI DI MEMORIA ================= */
+/* livello per ogni gioco: sale con 2 risultati buoni di fila, scende con 2 difficili */
+function mlvl(g){S.memx=S.memx||{};return S.memx[g]||(S.memx[g]={lvl:1,up:0,down:0})}
+function mAdapt(g,r){const m=mlvl(g),old=m.lvl;
+  if(r===2){m.up++;m.down=0;if(m.up>=2&&m.lvl<6){m.lvl++;m.up=0}}
+  else if(r===0){m.down++;m.up=0;if(m.down>=2&&m.lvl>1){m.lvl--;m.down=0}}
+  else{m.up=0;m.down=0}
+  if(m.lvl>old)toast("Livello "+m.lvl+" in "+GAMES[g].n+"!");else if(m.lvl<old)toast("Torniamo al livello "+m.lvl+", con calma.");
+  save()}
+
+/* ---- Coppie: carte da girare ---- */
+INIT.coppie=()=>{const L=mlvl("coppie").lvl,n=Math.min(8,2+L);
+  const pairs=shuffle(COPPIE).slice(0,n),cards=shuffle(pairs.flatMap((p,i)=>[{w:p[0],k:i},{w:p[1],k:i}]));
+  gs={cards,open:[],done:[],moves:0,n,phase:"peek",lock:false};
+  timer=setTimeout(()=>{if(gs&&gs.phase==="peek")coppieStart()},1200+n*450)};
+function coppieStart(){clearTimers();gs.phase="play";
+  /* restano nella stessa schermata: si girano tutte con l'animazione */
+  const r=app.querySelector("#ready");if(r)r.remove();paintCoppie();lastView=viewKey()}
+RENDER.coppie=()=>{
+  const L=mlvl("coppie").lvl,cols=gs.cards.length<=8?2:gs.cards.length<=12?3:4;
+  app.innerHTML=head("Coppie",gs.phase==="peek"?`Livello ${L}. Guarda bene: tra poco le carte si girano.`:`Livello ${L}. Trova le ${gs.n} coppie di parole che vanno insieme. Mosse: ${gs.moves}`)+`
+  <div class="card"><div class="memgrid" style="grid-template-columns:repeat(${cols},1fr)">${gs.cards.map((c,i)=>{const up=gs.phase==="peek"||gs.open.includes(i)||gs.done.includes(c.k);
+    return `<button class="mcard ${up?"up":""} ${gs.done.includes(c.k)?"ok":""}" data-c="${i}" ${gs.done.includes(c.k)?"disabled":""}><span class="back"></span><span class="front">${esc(c.w)}</span></button>`}).join("")}</div>
+  ${gs.phase==="peek"?`<button class="btn soft wide" id="ready">Sono pronto</button>`:""}</div>${boredBtn()}`;
+  const rd=app.querySelector("#ready");if(rd)rd.onclick=coppieStart;
+  app.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{
+    if(gs.phase!=="play"||gs.lock)return;const i=+b.dataset.c,c=gs.cards[i];if(gs.open.includes(i)||gs.done.includes(c.k))return;
+    gs.open.push(i);paintCoppie();
+    if(gs.open.length===2){gs.moves++;const [a,b2]=gs.open.map(x=>gs.cards[x]);gs.lock=true;
+      if(a.k===b2.k){gs.done.push(a.k);gs.open=[];gs.lock=false;paintCoppie();
+        if(gs.done.length===gs.n){const r=gs.moves<=gs.n+2?2:gs.moves<=gs.n*2?1:0;mAdapt("coppie",r);toast(`Tutte le coppie in ${gs.moves} mosse`);setTimeout(()=>finish(r),500)}}
+      else timer=setTimeout(()=>{if(!gs||!gs.cards)return;gs.open=[];gs.lock=false;paintCoppie()},900);paintCoppie()}
+  });
+};
+/* gira le carte senza ridisegnare la schermata, così si vede l'animazione */
+function paintCoppie(){
+  app.querySelectorAll("[data-c]").forEach(b=>{const i=+b.dataset.c,c=gs.cards[i],done=gs.done.includes(c.k);
+    b.classList.toggle("up",gs.open.includes(i)||done);b.classList.toggle("ok",done);b.disabled=done});
+  const sub=app.querySelector(".hello .muted");if(sub)sub.textContent=`Livello ${mlvl("coppie").lvl}. Trova le ${gs.n} coppie di parole che vanno insieme. Mosse: ${gs.moves}`;
+}
+
+/* ---- Cosa manca? ---- */
+function mancaRound(){const L=mlvl("manca").lvl,n=Math.min(9,3+L);const words=shuffle(PAROLE).slice(0,n),miss=pick(words);
+  const opts=shuffle([miss].concat(shuffle(PAROLE.filter(w=>!words.includes(w))).slice(0,1),shuffle(words.filter(w=>w!==miss)).slice(0,2)));
+  return {words,miss,opts,phase:"look",pick:null}}
+INIT.manca=()=>{gs={round:0,score:0,...mancaRound()};mancaLook()};
+function mancaLook(){const n=gs.words.length;timer=setTimeout(()=>{if(gs&&gs.phase==="look"){gs.phase="guess";gs.shown=shuffle(gs.words.filter(w=>w!==gs.miss));render()}},1500+n*700)}
+RENDER.manca=()=>{
+  const L=mlvl("manca").lvl,sub=`Livello ${L} · prova ${gs.round+1} di 3`;
+  if(gs.phase==="look"){app.innerHTML=head("Guarda queste parole",sub+". Leggile a bassa voce: tra poco una sparisce.")+`
+    <div class="card"><div class="wordgrid">${gs.words.map(w=>`<span>${esc(w)}</span>`).join("")}</div><button class="btn soft wide" id="ready">Fatto, nascondi</button></div>${boredBtn()}`;
+    app.querySelector("#ready").onclick=()=>{clearTimers();gs.phase="guess";gs.shown=shuffle(gs.words.filter(w=>w!==gs.miss));render()};return}
+  if(gs.phase==="guess"){app.innerHTML=head("Cosa manca?",sub)+`
+    <div class="card"><div class="wordgrid">${gs.shown.map(w=>`<span>${esc(w)}</span>`).join("")}<span class="hole">?</span></div>
+    <p class="small muted">Quale parola è sparita?</p><div class="two">${gs.opts.map((o,i)=>`<button class="btn soft" data-o="${i}">${esc(o)}</button>`).join("")}</div></div>${boredBtn()}`;
+    app.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{gs.pick=gs.opts[+b.dataset.o];if(gs.pick===gs.miss)gs.score++;gs.phase="fb";render()});return}
+  const ok=gs.pick===gs.miss;
+  app.innerHTML=head(ok?"Giusto!":"Era un'altra",sub)+`<div class="card"><p>Mancava <b>${esc(gs.miss)}</b>.</p><button class="btn wide" id="nx">${gs.round>=2?"Fine":"Prossima"}</button></div>`;
+  app.querySelector("#nx").onclick=()=>{if(gs.round>=2){const r=gs.score===3?2:gs.score>=2?1:0;mAdapt("manca",r);finish(r);return}
+    const sc=gs.score,rd=gs.round+1;gs={round:rd,score:sc,...mancaRound()};mancaLook();render()};
+};
+
+/* ---- Dove l'ho messo? ---- */
+INIT.dove=()=>{const L=mlvl("dove").lvl,n=Math.min(6,1+L);const obj=shuffle(OGGETTI).slice(0,n),pl=shuffle(POSTI).slice(0,n);
+  gs={items:obj.map((o,i)=>({o,p:pl[i]})),phase:"study",i:0,ok:0,order:null}};
+RENDER.dove=()=>{
+  const L=mlvl("dove").lvl;
+  if(gs.phase==="study"){app.innerHTML=head("Dove l'ho messo?",`Livello ${L}. Ricorda dove sono le cose. Trucco: immagina ogni oggetto nel suo posto, come una piccola scena.`)+`
+    <div class="card"><div class="stack">${gs.items.map(x=>`<div class="placerow"><b>${esc(x.o)}</b><span>${esc(x.p)}</span></div>`).join("")}</div>
+    <button class="btn wide" id="go">Le ho memorizzate</button></div>${boredBtn()}`;
+    app.querySelector("#go").onclick=()=>{gs.phase="ask";gs.order=shuffle(gs.items);render()};return}
+  if(gs.phase==="ask"){const x=gs.order[gs.i],opts=shuffle([x.p].concat(shuffle(gs.items.filter(y=>y!==x).map(y=>y.p)).slice(0,2),shuffle(POSTI.filter(p=>!gs.items.some(y=>y.p===p))).slice(0,1))).slice(0,4);
+    app.innerHTML=head("Dove l'ho messo?",`Livello ${L} · ${gs.i+1} di ${gs.order.length}`)+`
+    <div class="card"><p style="font-size:1.35rem;font-weight:600">Dove sono ${esc(x.o)}?</p>
+    <div class="stack">${opts.map(o=>`<button class="btn soft" data-p="${esc(o)}">${esc(o)}</button>`).join("")}</div></div>${boredBtn()}`;
+    app.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{const ok=b.dataset.p===x.p;if(ok)gs.ok++;
+      b.classList.add(ok?"right":"wrong");if(!ok){const r=[...app.querySelectorAll("[data-p]")].find(e=>e.dataset.p===x.p);if(r)r.classList.add("right")}
+      app.querySelectorAll("[data-p]").forEach(e=>e.disabled=true);
+      setTimeout(()=>{if(!gs)return;gs.i++;if(gs.i>=gs.order.length){gs.phase="end";render()}else render()},ok?600:1400)});return}
+  const n=gs.items.length,r=gs.ok===n?2:gs.ok>=Math.ceil(n/2)?1:0;
+  app.innerHTML=head(`${gs.ok} su ${n}`,"Dove l'ho messo?")+`<div class="card"><p>${r===2?"Tutto giusto: la tua memoria funziona bene.":"Va bene così. Il trucco della scena aiuta molto: provalo la prossima volta."}</p><button class="btn wide" id="fin">Fine</button></div>`;
+  app.querySelector("#fin").onclick=()=>{mAdapt("dove",r);finish(r)};
+};
+
+/* ---- Ricorda la storia ---- */
+INIT.storia=()=>{const L=mlvl("storia").lvl;const pool=STORIE.concat((S.extra.storie||[]));
+  const st=pick(pool);gs={st,phase:"read",i:0,ok:0,qs:st.q.map(q=>({q:q[0],a:q[1][0],opts:shuffle(q[1])})),lvl:L,busy:false}};
+RENDER.storia=()=>{
+  if(gs.phase==="read"){app.innerHTML=head("Ricorda la storia","Leggila a voce alta, piano. Poi si nasconde e arrivano 3 domande.")+`
+    <div class="card"><p class="storytext">${esc(gs.st.t)}</p><button class="btn wide" id="go">L'ho letta: nascondi</button>
+    ${sample?`<button class="btn ghost" id="newst" ${gs.busy?"disabled":""}>${gs.busy?'<span class="spin"></span> Preparo…':"Una storia nuova sui miei interessi"}</button>`:""}</div>${boredBtn()}`;
+    app.querySelector("#go").onclick=()=>{gs.phase="ask";render()};
+    const ns=app.querySelector("#newst");if(ns)ns.onclick=async()=>{const my=gs;gs.busy=true;render();
+      try{const r=await sample.json(`Scrivi una storia breve e realistica in italiano semplice, di 3-4 frasi, per allenare la memoria di un ragazzo di 18 anni con DSA. Argomento legato ai suoi interessi: ${S.interessi||"vita di tutti i giorni in un paese"}. Metti dettagli precisi da ricordare (nomi, numeri, luoghi, orari). Poi 3 domande su quei dettagli, ognuna con 3 risposte brevi: la prima è quella giusta.
+Rispondi SOLO con JSON {"storia":"...","domande":[{"q":"...","r":["giusta","sbagliata","sbagliata"]}]}`,{modelTier:"quick"});
+        if(gs!==my)return;const qs=(r.domande||[]).filter(x=>x&&x.q&&Array.isArray(x.r)&&x.r.length>=3).slice(0,3);if(!r.storia||qs.length<2)throw {};
+        const st={t:String(r.storia),q:qs.map(x=>[String(x.q),x.r.slice(0,3).map(String)])};S.extra.storie=(S.extra.storie||[]).concat([st]).slice(-20);save();
+        Object.assign(gs,{st,qs:st.q.map(q=>({q:q[0],a:q[1][0],opts:shuffle(q[1])})),busy:false});render()}
+      catch(e){if(gs!==my)return;gs.busy=false;toast(errMsg(e));render()}};return}
+  if(gs.phase==="ask"){const x=gs.qs[gs.i];
+    app.innerHTML=head("Ricorda la storia",`Domanda ${gs.i+1} di ${gs.qs.length}. Rispondi prima a voce, poi tocca.`)+`
+    <div class="card"><p style="font-size:1.3rem;font-weight:600">${esc(x.q)}</p><div class="stack">${x.opts.map(o=>`<button class="btn soft" data-a="${esc(o)}">${esc(o)}</button>`).join("")}</div></div>${boredBtn()}`;
+    app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const ok=b.dataset.a===x.a;if(ok)gs.ok++;b.classList.add(ok?"right":"wrong");
+      if(!ok){const r=[...app.querySelectorAll("[data-a]")].find(e=>e.dataset.a===x.a);if(r)r.classList.add("right")}
+      app.querySelectorAll("[data-a]").forEach(e=>e.disabled=true);
+      setTimeout(()=>{if(!gs)return;gs.i++;if(gs.i>=gs.qs.length)gs.phase="end";render()},ok?600:1400)});return}
+  const n=gs.qs.length,r=gs.ok===n?2:gs.ok>=2?1:0;
+  app.innerHTML=head(`${gs.ok} su ${n}`,"Ricorda la storia")+`<div class="card"><p class="storytext small">${esc(gs.st.t)}</p><p>${r===2?"Perfetto, hai ricordato tutto.":"Rileggila una volta: ricordare dopo aver letto è proprio l'allenamento."}</p><button class="btn wide" id="fin">Fine</button></div>`;
+  app.querySelector("#fin").onclick=()=>{mAdapt("storia",r);finish(r)};
 };
 
 /* ---- Ripasso (ripasso distanziato) ---- */
