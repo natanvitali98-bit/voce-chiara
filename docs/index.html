@@ -544,16 +544,38 @@ select{font:inherit;color:var(--fg);background:color-mix(in srgb,var(--fg) 5%,va
 .chest.open .ct{transform:translateY(-10px) rotate(-12deg);transform-origin:10% 100%}
 
 
-.livetxt{margin:8px 2px 0;font-size:15px;line-height:1.4;color:var(--ink);opacity:.8;min-height:1.4em}
+.livetxt{margin:8px 2px 0;font-size:15px;line-height:1.4;color:var(--fg);opacity:.8;min-height:1.4em}
 .livetxt:empty{display:none}
 .brain ul{margin:4px 0 10px;padding-left:20px}.brain li{margin:3px 0}
 .chunkpool{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-.chunkpool button{font:inherit;font-size:16px;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.chunkpool button{font:inherit;font-size:16px;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
 .chunkpool button.no{animation:shake .35s}
-.built{min-height:56px;padding:12px 14px;border-radius:14px;background:var(--soft,rgba(127,127,127,.08));font-size:18px;line-height:1.5}
+.built{min-height:56px;padding:12px 14px;border-radius:14px;background:var(--bg);font-size:18px;line-height:1.5}
 @keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
-.wchips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.wchips span{padding:5px 10px;border-radius:999px;background:var(--soft,rgba(127,127,127,.1));font-size:14px}
+.wchips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.wchips span{padding:5px 10px;border-radius:999px;background:var(--bg);font-size:14px}
 .gap{display:inline-block;min-width:70px;border-bottom:2px solid currentColor;text-align:center;font-weight:600}
+
+/* v26: animazioni ovunque */
+.enter .ggrid>*{animation:rise .45s var(--ease) both}.enter .ggrid>*:nth-child(1){animation-delay:0.0s}.enter .ggrid>*:nth-child(2){animation-delay:0.035s}.enter .ggrid>*:nth-child(3){animation-delay:0.07s}.enter .ggrid>*:nth-child(4){animation-delay:0.105s}.enter .ggrid>*:nth-child(5){animation-delay:0.14s}.enter .ggrid>*:nth-child(6){animation-delay:0.175s}.enter .ggrid>*:nth-child(7){animation-delay:0.21s}.enter .ggrid>*:nth-child(8){animation-delay:0.245s}.enter .ggrid>*:nth-child(9){animation-delay:0.28s}.enter .ggrid>*:nth-child(10){animation-delay:0.315s}.enter .ggrid>*:nth-child(11){animation-delay:0.35s}.enter .ggrid>*:nth-child(12){animation-delay:0.385s}.enter .ggrid>*:nth-child(13){animation-delay:0.42s}.enter .ggrid>*:nth-child(14){animation-delay:0.455s}.enter .ggrid>*:nth-child(15){animation-delay:0.49s}.enter .ggrid>*:nth-child(16){animation-delay:0.525s}.enter .ggrid>*:nth-child(17){animation-delay:0.56s}.enter .ggrid>*:nth-child(18){animation-delay:0.595s}.enter .ggrid>*:nth-child(19){animation-delay:0.63s}.enter .ggrid>*:nth-child(20){animation-delay:0.665s}
+.enter .badges>*{animation:pop .4s var(--spring) both}.enter .badges>*:nth-child(1){animation-delay:0.0s}.enter .badges>*:nth-child(2){animation-delay:0.03s}.enter .badges>*:nth-child(3){animation-delay:0.06s}.enter .badges>*:nth-child(4){animation-delay:0.09s}.enter .badges>*:nth-child(5){animation-delay:0.12s}.enter .badges>*:nth-child(6){animation-delay:0.15s}.enter .badges>*:nth-child(7){animation-delay:0.18s}.enter .badges>*:nth-child(8){animation-delay:0.21s}.enter .badges>*:nth-child(9){animation-delay:0.24s}.enter .badges>*:nth-child(10){animation-delay:0.27s}.enter .badges>*:nth-child(11){animation-delay:0.3s}.enter .badges>*:nth-child(12){animation-delay:0.33s}.enter .badges>*:nth-child(13){animation-delay:0.36s}.enter .badges>*:nth-child(14){animation-delay:0.39s}.enter .badges>*:nth-child(15){animation-delay:0.42s}.enter .badges>*:nth-child(16){animation-delay:0.45s}.enter .badges>*:nth-child(17){animation-delay:0.48s}.enter .badges>*:nth-child(18){animation-delay:0.51s}.enter .badges>*:nth-child(19){animation-delay:0.54s}.enter .badges>*:nth-child(20){animation-delay:0.57s}
+.enter .stats>*{animation:rise .5s var(--ease) both}.enter .stats>*:nth-child(1){animation-delay:0.0s}.enter .stats>*:nth-child(2){animation-delay:0.07s}.enter .stats>*:nth-child(3){animation-delay:0.14s}.enter .stats>*:nth-child(4){animation-delay:0.21s}
+.enter .brain li,.enter .brain .pair{animation:rise .4s var(--ease) both}.enter .brain li:nth-child(1){animation-delay:0.0s}.enter .brain li:nth-child(2){animation-delay:0.08s}.enter .brain li:nth-child(3){animation-delay:0.16s}.enter .brain li:nth-child(4){animation-delay:0.24s}
+.wchips span{animation:pop .35s var(--spring) both}.wchips span:nth-child(1){animation-delay:0.0s}.wchips span:nth-child(2){animation-delay:0.05s}.wchips span:nth-child(3){animation-delay:0.1s}.wchips span:nth-child(4){animation-delay:0.15s}.wchips span:nth-child(5){animation-delay:0.2s}.wchips span:nth-child(6){animation-delay:0.25s}.wchips span:nth-child(7){animation-delay:0.3s}.wchips span:nth-child(8){animation-delay:0.35s}.wchips span:nth-child(9){animation-delay:0.4s}.wchips span:nth-child(10){animation-delay:0.45s}.wchips span:nth-child(11){animation-delay:0.5s}.wchips span:nth-child(12){animation-delay:0.55s}.wchips span:nth-child(13){animation-delay:0.6s}.wchips span:nth-child(14){animation-delay:0.65s}.wchips span:nth-child(15){animation-delay:0.7s}.wchips span:nth-child(16){animation-delay:0.75s}.wchips span:nth-child(17){animation-delay:0.8s}.wchips span:nth-child(18){animation-delay:0.85s}.wchips span:nth-child(19){animation-delay:0.9s}.wchips span:nth-child(20){animation-delay:0.95s}.wchips span:nth-child(21){animation-delay:1.0s}.wchips span:nth-child(22){animation-delay:1.05s}.wchips span:nth-child(23){animation-delay:1.1s}.wchips span:nth-child(24){animation-delay:1.15s}.wchips span:nth-child(25){animation-delay:1.2s}.wchips span:nth-child(26){animation-delay:1.25s}.wchips span:nth-child(27){animation-delay:1.3s}.wchips span:nth-child(28){animation-delay:1.35s}.wchips span:nth-child(29){animation-delay:1.4s}.wchips span:nth-child(30){animation-delay:1.45s}
+.chunkpool button{transition:transform .15s}.chunkpool.fresh button{animation:pop .3s var(--spring) both}.chunkpool.fresh button:nth-child(1){animation-delay:0.0s}.chunkpool.fresh button:nth-child(2){animation-delay:0.04s}.chunkpool.fresh button:nth-child(3){animation-delay:0.08s}.chunkpool.fresh button:nth-child(4){animation-delay:0.12s}.chunkpool.fresh button:nth-child(5){animation-delay:0.16s}.chunkpool.fresh button:nth-child(6){animation-delay:0.2s}.chunkpool.fresh button:nth-child(7){animation-delay:0.24s}.chunkpool.fresh button:nth-child(8){animation-delay:0.28s}
+.chunkpool button:active{transform:scale(.94)}
+.enter .chips button{animation:pop .3s var(--spring) both}.enter .chips button:nth-child(1){animation-delay:0.0s}.enter .chips button:nth-child(2){animation-delay:0.03s}.enter .chips button:nth-child(3){animation-delay:0.06s}.enter .chips button:nth-child(4){animation-delay:0.09s}.enter .chips button:nth-child(5){animation-delay:0.12s}.enter .chips button:nth-child(6){animation-delay:0.15s}.enter .chips button:nth-child(7){animation-delay:0.18s}.enter .chips button:nth-child(8){animation-delay:0.21s}.enter .chips button:nth-child(9){animation-delay:0.24s}.enter .chips button:nth-child(10){animation-delay:0.27s}
+.enter .rung{animation:rise .4s var(--ease) both}.enter .rung:nth-child(1){animation-delay:0.0s}.enter .rung:nth-child(2){animation-delay:0.06s}.enter .rung:nth-child(3){animation-delay:0.12s}.enter .rung:nth-child(4){animation-delay:0.18s}.enter .rung:nth-child(5){animation-delay:0.24s}.enter .rung:nth-child(6){animation-delay:0.3s}
+.enter .pitem{animation:rise .4s var(--ease) both}.enter .pitem:nth-child(1){animation-delay:0.0s}.enter .pitem:nth-child(2){animation-delay:0.06s}.enter .pitem:nth-child(3){animation-delay:0.12s}.enter .pitem:nth-child(4){animation-delay:0.18s}.enter .pitem:nth-child(5){animation-delay:0.24s}.enter .pitem:nth-child(6){animation-delay:0.3s}
+.gcard .gicon{transition:transform .25s var(--spring)}.gcard:active .gicon{transform:rotate(-8deg) scale(1.1)}
+.card.good{animation:goodGlow .8s var(--ease)}
+@keyframes goodGlow{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}100%{box-shadow:0 0 0 20px transparent}}
+.card.bad{animation:shake .4s}
+.gap.fill{animation:pop .45s var(--spring) both;color:var(--accent)}
+.qtext{font-size:22px;line-height:1.5;font-weight:500;margin:4px 0 14px}
+.cattitle{font-size:26px;line-height:1.2;font-weight:600;color:var(--accent);margin:2px 0 10px;animation:pop .4s var(--spring) both}
+.built .piece{display:inline-block;animation:pop .35s var(--spring) both}
+.livetxt{animation:in .3s ease}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -674,7 +696,7 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
-const APP_VERSION="v25";
+const APP_VERSION="v26";
 let AUDIO_OK=true;try{AUDIO_OK=localStorage.getItem("vc-noaudio")!=="1"}catch(e){}
 function setAudioOk(v){AUDIO_OK=v;try{v?localStorage.removeItem("vc-noaudio"):localStorage.setItem("vc-noaudio","1")}catch(e){}}
 let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
@@ -1100,7 +1122,10 @@ function viewKey(){
   if(!gs)return "play:"+(run&&run.g);
   return "play:"+(run&&run.g)+":"+(gs.end?"end":[gs.phase||"",gs.i==null?"":gs.i,gs.round==null?"":gs.round,gs.k||""].join(":"));
 }
-function animateView(){const k=viewKey();if(k===lastView)return;lastView=k;app.classList.remove("enter");void app.offsetWidth;app.classList.add("enter")}
+function animateView(){const k=viewKey();if(k===lastView)return;lastView=k;app.classList.remove("enter");void app.offsetWidth;app.classList.add("enter");countUp();const my=++enterTok;setTimeout(()=>{if(my===enterTok)app.classList.remove("enter")},1100)}
+let enterTok=0;
+function countUp(){if(REDUCED)return;app.querySelectorAll(".stat b").forEach(el=>{const m=el.textContent.match(/^(\d+)(.*)$/);if(!m)return;const to=+m[1],rest=m[2];if(to<2)return;
+  const t0=performance.now(),d=750;(function f(t){const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=Math.round(to*e)+rest;if(k<1&&el.isConnected)requestAnimationFrame(f);else el.textContent=to+rest})(t0)})}
 function floatPts(t){if(REDUCED)return;const el=document.createElement("div");el.className="pts";el.textContent=t;document.body.appendChild(el);setTimeout(()=>el.remove(),1400)}
 function celebrate(big){
   if(REDUCED)return;
@@ -1662,11 +1687,11 @@ INIT.giusta=()=>{const L=mlvl("giusta").lvl,nopt=L>=3?3:2;
   gs={items,i:0,score:0,pick:null}};
 RENDER.giusta=()=>{const it=gs.items[gs.i],L=mlvl("giusta").lvl,sub=`Livello ${L} · ${gs.i+1} di ${gs.items.length}${it.mine?" · dalle tue parole":""}`;
   const full=it.f.replace("___",it.ok);
-  if(gs.pick==null){app.innerHTML=head("Parola giusta",sub)+`<div class="card"><p class="big" style="font-size:22px;line-height:1.5">${esc(it.f).replace("___",'<span class="gap">?</span>')}</p>
+  if(gs.pick==null){app.innerHTML=head("Parola giusta",sub)+`<div class="card"><p class="qtext">${esc(it.f).replace("___",'<span class="gap">?</span>')}</p>
     <div class="${it.opts.length>2?"":"two"}" style="display:grid;gap:8px;${it.opts.length>2?"grid-template-columns:1fr 1fr 1fr":""}">${it.opts.map((o,i)=>`<button class="btn soft" data-o="${i}">${esc(o)}</button>`).join("")}</div></div>${boredBtn()}`;
-    app.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{gs.pick=it.opts[+b.dataset.o];if(gs.pick===it.ok)gs.score++;speak(full);render()});return}
+    app.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{gs.pick=it.opts[+b.dataset.o];if(gs.pick===it.ok){gs.score++;floatPts("✓")}speak(full);render()});return}
   const ok=gs.pick===it.ok,last=gs.i>=gs.items.length-1;
-  app.innerHTML=head(ok?"Giusto!":"Quasi",sub)+`<div class="card"><p style="font-size:20px;line-height:1.5">${esc(full)}</p>
+  app.innerHTML=head(ok?"Giusto!":"Quasi",sub)+`<div class="card ${ok?"good":"bad"}"><p class="qtext">${esc(it.f).replace("___",`<span class="gap fill">${esc(it.ok)}</span>`)}</p>
     ${ok?"":`<p class="small muted">Hai scelto “${esc(gs.pick)}”. Quella giusta è “${esc(it.ok)}”.</p>`}
     <p class="note">Ora dilla ad alta voce, con calma. Dirla con la bocca la fissa meglio che leggerla.</p>
     <button class="btn wide" id="nx">${last?"Fine":"L'ho detta, avanti"}</button></div>`;
@@ -1679,10 +1704,10 @@ INIT.ordine=()=>{const L=mlvl("ordine").lvl,keys=Object.keys(FRASI).map(Number).
   const pool=FRASI[lv].map(chunks).filter(c=>c.length>=3);
   gs={items:shuffle(pool.length?pool:FRASI[keys[keys.length-1]].map(chunks)).slice(0,3),i:0,placed:[],err:0,bad:null};gs.pool=shuffle(gs.items[0].map((_,k)=>k))};
 RENDER.ordine=()=>{const it=gs.items[gs.i],L=mlvl("ordine").lvl,sub=`Livello ${L} · frase ${gs.i+1} di ${gs.items.length}`,done=gs.placed.length===it.length;
-  app.innerHTML=head(done?"Ecco la frase":"Frase in ordine",sub+(done?"":". Tocca i pezzi nell'ordine giusto."))+`<div class="card">
-    <div class="built">${gs.placed.map(k=>esc(it[k])).join(" ")||'<span class="muted">…</span>'}</div>
+  app.innerHTML=head(done?"Ecco la frase":"Frase in ordine",sub+(done?"":". Tocca i pezzi nell'ordine giusto."))+`<div class="card${done?" good":""}">
+    <div class="built">${gs.placed.map((k,j)=>j===gs.placed.length-1?`<span class="piece">${esc(it[k])}</span>`:esc(it[k])).join(" ")||'<span class="muted">…</span>'}</div>
     ${done?`<p class="note">Ora dilla ad alta voce, un pezzo alla volta, respirando tra un pezzo e l'altro.</p><button class="btn wide" id="nx">${gs.i>=gs.items.length-1?"Fine":"L'ho detta, avanti"}</button>`
-    :`<div class="chunkpool">${gs.pool.filter(k=>!gs.placed.includes(k)).map(k=>`<button data-k="${k}" class="${gs.bad===k?"no":""}">${esc(it[k])}</button>`).join("")}</div>`}</div>${done?"":boredBtn()}`;
+    :`<div class="chunkpool${gs.placed.length||gs.bad!=null?"":" fresh"}">${gs.pool.filter(k=>!gs.placed.includes(k)).map(k=>`<button data-k="${k}" class="${gs.bad===k?"no":""}">${esc(it[k])}</button>`).join("")}</div>`}</div>${done?"":boredBtn()}`;
   gs.bad=null;
   app.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{const k=+b.dataset.k,want=gs.placed.length;
     if(k===want||it[k]===it[want]){gs.placed.push(k===want?k:want);if(gs.placed.length===it.length)speak(it.join(" "))}else{gs.err++;gs.bad=k}render()});
@@ -1696,17 +1721,18 @@ const STOP=new Set("e ed poi allora ehm eh ah cioè il lo la i gli le l un una u
 INIT.fiume=()=>{gs={cats:shuffle(CATEGORIE).slice(0,2),i:0,res:[],phase:"ready"}};
 const fiumeTarget=()=>4+2*mlvl("fiume").lvl;
 function fiumeWords(t){const seen=new Set();return String(t||"").toLowerCase().replace(/[^a-zàèéìòù' ]/g," ").split(/\s+/).map(w=>w.replace(/^[a-z]'/,"")).filter(w=>w.length>=3&&!STOP.has(w)&&!seen.has(w)&&seen.add(w))}
-RENDER.fiume=()=>{const cat=gs.cats[gs.i],tg=fiumeTarget(),sub=`Livello ${mlvl("fiume").lvl} · prova ${gs.i+1} di 2 · obiettivo ${tg} parole`;
+RENDER.fiume=()=>{if(gs.phase==="res"&&!gs.cel){gs.cel=1;const rr=gs.res[gs.i];if(rr&&rr.n>=fiumeTarget())setTimeout(()=>celebrate(false),200)}
+  if(gs.phase!=="res")gs.cel=0;const cat=gs.cats[gs.i],tg=fiumeTarget(),sub=`Livello ${mlvl("fiume").lvl} · prova ${gs.i+1} di 2 · obiettivo ${tg} parole`;
   const v=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)&&(!!sample||!!SR);
   if(gs.phase==="res"){const r=gs.res[gs.i];const best=(S.fiumeBest||0);
-    app.innerHTML=head(r.n>=tg?"Grande!":r.n>=tg/2?"Bene":"Si allena così",sub)+`<div class="card"><p><b>${r.n}</b> parole su ${tg}${r.n>=best&&r.n>0?" · tuo record!":""}</p>
+    app.innerHTML=head(r.n>=tg?"Grande!":r.n>=tg/2?"Bene":"Si allena così",sub)+`<div class="card"><p><b>${r.n}</b> parole su ${tg}${r.n>=best&&r.n>0?" · tuo record!":""}</p>${r.n>=tg?'<svg class="donecheck" viewBox="0 0 52 52" width="44" height="44"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-15"/></svg>':""}
       ${r.words.length?`<div class="wchips">${r.words.map(w=>`<span>${esc(w)}</span>`).join("")}</div>`:""}
       <p class="small muted">Trovare tante parole in fretta allena la strada per tirarle fuori quando parli con qualcuno.</p>
       <button class="btn wide" id="nx">${gs.i>=1?"Fine":"Altra categoria"}</button></div>`;
     app.querySelector("#nx").onclick=()=>{if(gs.i>=1){const ok=gs.res.filter(x=>x.n>=tg).length,half=gs.res.filter(x=>x.n>=tg/2).length;const rr=ok===2?2:half>=1?1:0;mAdapt("fiume",rr);finish(rr);return}gs.i++;gs.phase="ready";render()};return}
   if(gs.phase==="self"){app.innerHTML=head("Quante ne hai dette?",sub)+`<div class="card"><p>Categoria: <b>${esc(cat)}</b></p><div class="two">${[3,6,10,15].map(n=>`<button class="btn soft" data-n="${n}">${n===15?"15 o più":"circa "+n}</button>`).join("")}</div></div>`;
     app.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{const n=+b.dataset.n;gs.res[gs.i]={n,words:[]};S.fiumeBest=Math.max(S.fiumeBest||0,n);save();gs.phase="res";render()});return}
-  app.innerHTML=head("Fiume di parole",sub)+`<div class="card"><p class="eyebrow">Categoria</p><p class="big" style="font-size:26px">${esc(cat)}</p>
+  app.innerHTML=head("Fiume di parole",sub)+`<div class="card"><p class="eyebrow">Categoria</p><p class="cattitle">${esc(cat)}</p>
     <p class="small muted">Hai 30 secondi. Dì ad alta voce più parole che puoi di questo tipo, una dopo l'altra. Se ti blocchi, va bene: pensa a un posto (la cucina, la piazza…) e guardati intorno con la testa.</p>
     ${v?micHTML("recf","Via! Ti ascolto 30 secondi"):`<button class="btn wide" id="selfgo">Le dico senza microfono</button>`}</div>${boredBtn()}`;
   const sg=app.querySelector("#selfgo");if(sg)sg.onclick=()=>{gs.phase="self";render()};
