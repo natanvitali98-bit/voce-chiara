@@ -281,7 +281,7 @@ async function gemini(input,json,audio,key){
   for(const model of MODELS){
     for(const fast of [true,false]){
       const generationConfig=fast?Object.assign({},base,{thinkingConfig:{thinkingBudget:0}}):base;
-      try{r=await fetch(`${GEMINI}/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({contents,generationConfig})})}
+      try{r=await fetch(`${GEMINI}/${model}:generateContent`,{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":key},body:JSON.stringify({contents,generationConfig})})}
       catch(e){throw {code:"offline"}}
       if(r.status===404)break;
       const d=await r.json().catch(()=>null);
@@ -304,7 +304,7 @@ function makeSample(){
 function pushState(){}
 function boot(){sample=GKEY?makeSample():null;sampleChecked=true;if(tab!=="play")render()}
 async function saveKey(k){
-  k=String(k||"").trim();if(!k)throw {code:"no_key"};
+  k=String(k||"").replace(/\s+/g,"").replace(/^["']|["']$/g,"");if(!k)throw {code:"no_key"};
   await gemini("Rispondi solo: ok",false,null,k);
   GKEY=k;try{localStorage.setItem(KEYSTORE,k)}catch(e){}
   sample=makeSample();sampleChecked=true;
@@ -314,7 +314,7 @@ function keyFormHTML(intro){
     <div><b>1.</b> Apri <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> ed entra con Google</div>
     <div><b>2.</b> Tocca <b>Create API key</b> e copiala</div>
     <div><b>3.</b> Incollala qui sotto</div></div>
-    <label for="gkey">Chiave Gemini</label><input id="gkey" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="AIza…">
+    <label for="gkey">Chiave Gemini</label><input id="gkey" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Incolla qui la chiave">
     <button class="btn wide" id="gsave">Collega il Cervello</button><p id="gmsg" class="small" hidden></p>
     <p class="small muted">La chiave resta solo su questo telefono. È gratuita: nella versione gratis Google può usare ciò che invii per migliorare i suoi servizi, quindi negli esercizi non dire cose private.</p>`;
 }
