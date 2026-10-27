@@ -1,5 +1,5 @@
 // Voce Chiara: tiene in memoria la pagina per aprirla anche con poca connessione.
-const CACHE = "voce-chiara-v7";
+const CACHE = "voce-chiara-v8";
 const SHELL = ["./", "manifest.webmanifest", "icon-192.png", "apple-touch-icon.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
