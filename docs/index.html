@@ -29,6 +29,7 @@
   --accent:#6dc0a5; --accent-soft:#1f3a33; --warm:#e8ac55; --warm-soft:#3a2d18; --bad:#e58475; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{min-height:100%}
+html{overflow-anchor:none}
 body{background:var(--bg);color:var(--fg);font-family:var(--ff);font-size:17px;line-height:1.6;letter-spacing:.01em;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-block:18px calc(96px + env(safe-area-inset-bottom,0px))}
@@ -296,6 +297,77 @@ nav.tabs button[aria-current="page"]{animation:navpill .3s var(--spring)}
 .login .wave{height:80px;justify-content:center}
 .login .wave i{width:9px}
 
+
+/* ===== v18: Eco, colori dei giochi, strada del percorso ===== */
+:root{--c-parlare:#2c6b5a;--c-parole:#2f6f9f;--c-memoria:#b8751a;--c-dialogo:#b4543f;--c-studio:#5b5fa8;--c-ripasso:#6d7f2e}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--c-parlare:#6dc0a5;--c-parole:#79b4e0;--c-memoria:#e8ac55;--c-dialogo:#ec8f78;--c-studio:#a5a8ec;--c-ripasso:#b6c96f}}
+:root[data-theme="dark"]{--c-parlare:#6dc0a5;--c-parole:#79b4e0;--c-memoria:#e8ac55;--c-dialogo:#ec8f78;--c-studio:#a5a8ec;--c-ripasso:#b6c96f}
+.cat-parlare{--gc:var(--c-parlare)}.cat-parole{--gc:var(--c-parole)}.cat-memoria{--gc:var(--c-memoria)}.cat-dialogo{--gc:var(--c-dialogo)}.cat-studio{--gc:var(--c-studio)}.cat-ripasso{--gc:var(--c-ripasso)}.cat-mini{--gc:var(--warm)}
+
+/* Eco: il personaggio del Cervello */
+.eco{width:96px;height:88px;overflow:visible;flex:none}
+.eco .shell{fill:var(--accent-soft);stroke:var(--accent);stroke-width:3;stroke-linejoin:round}
+.eco .eye{fill:var(--fg)}
+.eco .shine{fill:var(--surface)}
+.eco .cheek{fill:var(--warm);opacity:.35}
+.eco .mouth{fill:none;stroke:var(--fg);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.eco .mouth.open{fill:var(--fg)}
+.eco .waves path{fill:none;stroke:var(--warm);stroke-width:3;stroke-linecap:round;opacity:0}
+.eco .dots circle{fill:var(--accent);opacity:0}
+.eco .body{transform-box:fill-box;transform-origin:50% 100%;animation:bob 3.2s ease-in-out infinite}
+.eco .eyes{transform-box:fill-box;transform-origin:50% 50%;animation:blink 4.6s infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.eco.think .pupils{animation:look 1.8s ease-in-out infinite}
+@keyframes look{0%,100%{transform:translateX(0)}30%{transform:translateX(-3px)}70%{transform:translateX(3px)}}
+.eco.think .dots circle{animation:dotup 1.2s ease-in-out infinite}
+.eco.think .dots circle:nth-child(2){animation-delay:.2s}.eco.think .dots circle:nth-child(3){animation-delay:.4s}
+@keyframes dotup{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+.eco.happy .body{animation:jump .7s var(--spring) 3}
+@keyframes jump{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-14px) scale(1.04,.96)}70%{transform:translateY(0) scale(1.06,.94)}}
+.eco.listen .waves path{animation:wv 1.2s ease-out infinite}
+.eco.listen .waves path:nth-child(2){animation-delay:.3s}
+@keyframes wv{0%{opacity:0;transform:translateX(0)}40%{opacity:1}100%{opacity:0;transform:translateX(5px)}}
+.eco.small{width:40px;height:37px}
+.eco.big{width:132px;height:121px}
+
+/* intestazione di Oggi con Eco e il suo fumetto */
+.hero{grid-template-columns:auto 1fr;gap:14px}
+.hero .say{background:var(--surface);border-radius:16px 16px 16px 4px;padding:10px 14px;box-shadow:var(--shadow);font-size:.95rem;line-height:1.45;position:relative;animation:pop .45s var(--spring) .25s both}
+.hero .hello{gap:6px}
+
+/* carte dei giochi: colore e icona propri */
+.gicon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--gc) 16%,var(--surface));color:var(--gc);flex:none}
+.gicon svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.gcard[class*="cat-"]{background:linear-gradient(160deg,color-mix(in srgb,var(--gc) 9%,var(--surface)) 0,var(--surface) 65%);border-color:color-mix(in srgb,var(--gc) 25%,var(--line))}
+.gcard[class*="cat-"]::after{background:var(--gc);opacity:.1}
+.gcard .tag{background:color-mix(in srgb,var(--gc) 14%,transparent);color:var(--gc)}
+.gcard .gtop{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.pitem{grid-template-columns:44px 1fr auto}
+.pitem .gicon{width:40px;height:40px;border-radius:12px;position:relative}
+.pitem.done .gicon{background:var(--accent);color:var(--surface)}
+.pitem.done .gicon svg{display:none}
+.pitem.done .gicon::after{content:"";width:16px;height:9px;border-left:3px solid currentColor;border-bottom:3px solid currentColor;transform:rotate(-45deg) translate(1px,-2px);animation:tickpop .45s var(--spring)}
+.playbar .gchip{display:inline-flex;align-items:center;gap:8px}
+.playbar .gchip .gicon{width:30px;height:30px;border-radius:10px}
+.playbar .gchip .gicon svg{width:17px;height:17px}
+
+/* strada del percorso */
+.road{display:grid;grid-template-columns:repeat(var(--n),1fr);position:relative;padding:8px 0 2px}
+.road::before{content:"";position:absolute;left:calc(50%/var(--n));right:calc(50%/var(--n));top:26px;border-top:3px dashed var(--line)}
+.road .fill{position:absolute;left:calc(50%/var(--n));top:25px;height:5px;border-radius:3px;background:var(--accent);animation:growX 1s var(--ease) both .2s}
+.stop{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;z-index:1;text-align:center}
+.stop .node{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--surface);border:3px solid var(--line);color:var(--muted);font-size:.9rem}
+.stop.done .node{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.stop.now .node{border-color:var(--warm);color:var(--warm);box-shadow:0 0 0 0 var(--warm);animation:beacon 2s ease-out infinite}
+@keyframes beacon{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--warm) 55%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+.stop span{font-size:.7rem;color:var(--muted);line-height:1.25;max-width:76px}
+.stop.now span{color:var(--fg);font-weight:600}
+
+/* chat: Eco accanto alle risposte */
+.msg.ai{position:relative;margin-left:34px}
+.msg.ai::before{content:"";position:absolute;left:-34px;bottom:0;width:26px;height:24px;background:var(--ecoMini) no-repeat center/contain}
+.endhead .eco{margin:0 auto}
 @media (prefers-reduced-motion:reduce){.wave i{height:60%}.meter i{transform:scaleY(.5)}}
 
 </style>
@@ -395,7 +467,7 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
-const APP_VERSION="v17";
+const APP_VERSION="v18";
 let AUDIO_OK=true;try{AUDIO_OK=localStorage.getItem("vc-noaudio")!=="1"}catch(e){}
 function setAudioOk(v){AUDIO_OK=v;try{v?localStorage.removeItem("vc-noaudio"):localStorage.setItem("vc-noaudio","1")}catch(e){}}
 let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
@@ -517,7 +589,7 @@ function wireKeyForm(after){
 }
 function renderLogin(){
   document.querySelector("nav.tabs").hidden=true;
-  app.innerHTML=`<div class="login">${WAVE_HTML}<div class="hello" style="text-align:center"><p class="eyebrow">Voce Chiara</p><h1>Collega il Cervello</h1></div>
+  app.innerHTML=`<div class="login"><div style="display:grid;place-items:center">${eco("happy","big")}</div><div class="hello" style="text-align:center"><p class="eyebrow">Voce Chiara</p><h1>Collega il Cervello</h1></div>
   <div class="card">${keyFormHTML(`<p class="muted">Il Cervello ti ascolta, ti risponde e crea esercizi per te. Serve una chiave gratuita di Google Gemini. Ci vogliono 2 minuti.</p>`)}
   <button class="btn ghost" id="skip">Lo faccio dopo</button></div></div>`;
   const done=()=>{try{localStorage.setItem("vc-setup","1")}catch(e){}document.querySelector("nav.tabs").hidden=false;render()};
@@ -629,6 +701,10 @@ function swapItem(i){
 
 /* ================= ANIMAZIONI ================= */
 const REDUCED=(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})();
+function setEcoMini(){try{
+  const cs=getComputedStyle(document.documentElement),c=v=>cs.getPropertyValue(v).trim()||"#2c6b5a";
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 96"><path d="M20 6h58a16 16 0 0 1 16 16v34a16 16 0 0 1-16 16H46L30 86V72H20A16 16 0 0 1 4 56V22A16 16 0 0 1 20 6z" fill="${c("--accent-soft")}" stroke="${c("--accent")}" stroke-width="5"/><ellipse cx="37" cy="35" rx="6" ry="8" fill="${c("--fg")}"/><ellipse cx="63" cy="35" rx="6" ry="8" fill="${c("--fg")}"/><path d="M41 51q9 8 18 0" fill="none" stroke="${c("--fg")}" stroke-width="4" stroke-linecap="round"/></svg>`;
+  document.documentElement.style.setProperty("--ecoMini",`url("data:image/svg+xml,${encodeURIComponent(svg)}")`)}catch(e){}}
 const WAVE_HTML='<div class="wave" aria-hidden="true">'+"<i></i>".repeat(7)+'</div>';
 const FLAME_SVG=on=>`<svg class="flame ${on?"":"off"}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-6 1-9.5z"/><path d="M12 13c1 1.5 2 2.3 2 3.8a2 2 0 0 1-4 0c0-1.2.9-2 2-3.8z"/></svg>`;
 const DONE_SVG='<svg class="donecheck" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg>';
@@ -670,6 +746,52 @@ function meterLoop(){
 }
 const METER=(n,big)=>`<span class="meter${big?" big":""}" aria-hidden="true">${"<i></i>".repeat(n)}</span>`;
 
+
+/* ---- Eco: il personaggio del Cervello ---- */
+function eco(mood,size){
+  mood=mood||"idle";
+  const mouth=mood==="happy"?'<path class="mouth open" d="M38 57q12 14 24 0z"/>':mood==="think"?'<path class="mouth" d="M44 61q6-3 12 0"/>':mood==="listen"?'<ellipse class="mouth open" cx="50" cy="60" rx="4" ry="5"/>':'<path class="mouth" d="M41 57q9 8 18 0"/>';
+  return `<svg class="eco ${mood} ${size||""}" viewBox="-6 -10 118 106" aria-hidden="true">
+  <g class="dots"><circle cx="78" cy="-2" r="3.5"/><circle cx="88" cy="-6" r="3.5"/><circle cx="98" cy="-2" r="3.5"/></g>
+  <g class="waves"><path d="M100 38q7 9 0 18"/><path d="M106 33q10 14 0 28"/></g>
+  <g class="body">
+    <path class="shell" d="M20 12h58a16 16 0 0 1 16 16v34a16 16 0 0 1-16 16H46L30 92V78H20A16 16 0 0 1 4 62V28A16 16 0 0 1 20 12z"/>
+    <g class="eyes"><g class="pupils"><ellipse class="eye" cx="37" cy="41" rx="5.5" ry="7.5"/><ellipse class="eye" cx="63" cy="41" rx="5.5" ry="7.5"/>
+      <circle class="shine" cx="39" cy="38" r="2"/><circle class="shine" cx="65" cy="38" r="2"/></g></g>
+    <ellipse class="cheek" cx="25" cy="54" rx="6" ry="3.5"/><ellipse class="cheek" cx="75" cy="54" rx="6" ry="3.5"/>
+    ${mouth}
+  </g></svg>`;
+}
+function ecoSay(){
+  const t=today(),did=!!S.days[t],st=streak(),h=new Date().getHours();
+  if(S.goal&&checkinDue())return "Prima di tutto: com'è andata questa settimana parlando con le persone?";
+  if(!did&&S.anchor)return h<11?"Pronto per il tuo minuto? Ne basta uno.":"Hai un minuto? Facciamo una cosa piccola insieme.";
+  if(!did)return "Ciao! Sono Eco. Oggi facciamo solo un minuto, va bene?";
+  if(st>=3)return `${st} giorni di fila! Si vede che ti stai allenando.`;
+  return "Oggi ci sei già stato. Se vuoi, continuiamo ancora un po'.";
+}
+/* icone dei giochi */
+const GICONS={
+  leggi:'<path d="M3 5c3-1.3 6-1.3 9 .5 3-1.8 6-1.8 9-.5v13c-3-1.3-6-1.3-9 .5-3-1.8-6-1.8-9-.5z"/><path d="M12 5.5v13"/>',
+  racconta:'<path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9h8M8 12h5"/>',
+  spiega:'<circle cx="12" cy="12" r="8"/><path d="M6.5 6.5l11 11"/>',
+  indovina:'<path d="M9 9a3 3 0 1 1 4.5 2.6c-1 .6-1.5 1.2-1.5 2.4"/><circle cx="12" cy="17.5" r=".6"/><circle cx="12" cy="12" r="9"/>',
+  ragnatela:'<circle cx="12" cy="12" r="2.2"/><circle cx="5" cy="6" r="1.8"/><circle cx="19" cy="6" r="1.8"/><circle cx="5" cy="18" r="1.8"/><circle cx="19" cy="18" r="1.8"/><path d="M10.3 10.6 6.4 7.2M13.7 10.6l3.9-3.4M10.3 13.4l-3.9 3.4M13.7 13.4l3.9 3.4"/>',
+  sequenze:'<rect x="3" y="4" width="5" height="5" rx="1"/><rect x="9.5" y="4" width="5" height="5" rx="1"/><rect x="16" y="4" width="5" height="5" rx="1"/><path d="M5.5 14v5M12 14v5M18.5 14v5"/>',
+  ripasso:'<path d="M4 12a8 8 0 0 1 14-5.3L20 9"/><path d="M20 4v5h-5"/><path d="M20 12a8 8 0 0 1-14 5.3L4 15"/><path d="M4 20v-5h5"/>',
+  conversazione:'<path d="M3 5h12v8H8l-4 3v-3H3z"/><path d="M15 9h6v8h-1v3l-4-3h-5v-2"/>',
+  studia:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>',
+  minuto:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/>'
+};
+const gicon=g=>`<span class="gicon"><svg viewBox="0 0 24 24" aria-hidden="true">${GICONS[g]||GICONS.minuto}</svg></span>`;
+const catOf=g=>"cat-"+((GAMES[g]&&GAMES[g].cat)||"mini");
+/* strada delle settimane */
+function roadHTML(steps,w){
+  const n=steps.length,pct=n>1?Math.max(0,Math.min(1,w/(n-1)))*100:0;
+  const frac=n>1?Math.max(0,Math.min(1,w/(n-1))):0;
+  return `<div class="road" style="--n:${n}">${w>0?`<div class="fill" style="width:calc((100% - 100% / ${n}) * ${frac.toFixed(3)})"></div>`:""}${steps.map((s,i)=>`<div class="stop ${i<w?"done":i===w?"now":""}"><div class="node">${i<w?"✓":i+1}</div><span>${esc(s.titolo)}</span></div>`).join("")}</div>`;
+}
+
 /* ================= NAVIGAZIONE ================= */
 let tab="oggi", run=null, gs=null, timer=null, pendingReload=false;
 try{const h=location.hash.slice(1);if(["oggi","giochi","dial","cervello","prog"].includes(h))tab=h}catch(e){}
@@ -710,7 +832,7 @@ function bored(){
 function head(title,sub){
   const p=run.planIdx!=null&&S.plan?S.plan.items:null;
   const done=p?p.filter(x=>x.done).length:0;
-  return `<div class="playbar"><div class="row"><span class="eyebrow">${p?`Gioco ${run.planIdx+1} di ${p.length}`:"Gioco libero"} · ${esc(GAMES[run.g].n)}</span><button class="btn ghost sm" id="quit">Esci</button></div>
+  return `<div class="playbar ${catOf(run.g)}"><div class="row"><span class="gchip">${gicon(run.g)}<span class="eyebrow">${p?`Gioco ${run.planIdx+1} di ${p.length}`:"Gioco libero"} · ${esc(GAMES[run.g].n)}</span></span><button class="btn ghost sm" id="quit">Esci</button></div>
   ${p?`<div class="bar"><i style="width:${done/p.length*100}%"></i></div>`:""}</div>
   <div class="hello"><h1>${title}</h1>${sub?`<p class="muted">${sub}</p>`:""}</div>`;
 }
@@ -722,7 +844,7 @@ function wire(){
 function rPlay(){
   if(gs&&gs.end&&run.g==="minuto"){
     const st=streak();
-    app.innerHTML=`<div class="hello endhead">${DONE_SVG}<p class="eyebrow">1 minuto</p><h1>Fatto!</h1></div>
+    app.innerHTML=`<div class="hello endhead">${eco("happy","big")}<p class="eyebrow">1 minuto</p><h1>Fatto!</h1></div>
     <div class="card"><div class="row" style="gap:8px;align-items:baseline"><span class="big">${st}</span><span class="muted">${st===1?"giorno":"giorni"} di fila</span></div>
     <p>Questo minuto conta davvero. Un'abitudine nasce dal ripetere una cosa piccola ogni giorno nello stesso momento, non da quanto fai.</p>
     <p class="small muted">Se vuoi, continua. Se no, va benissimo così: ci vediamo ${S.anchor?"dopo che "+esc(S.anchor):"domani"}.</p>
@@ -732,7 +854,7 @@ function rPlay(){
   }
   if(gs&&gs.end){
     const msg=gs.planDone?"Hai finito il percorso. +20 punti bonus.":gs.r===0?"Era difficile, e l'hai fatto lo stesso. È così che si migliora.":`Fatto. +${gs.pts||10} punti.`;
-    app.innerHTML=`<div class="hello endhead">${DONE_SVG}<p class="eyebrow">${esc(GAMES[run.g].n)}</p><h1>${gs.planDone?"Percorso completato":"Bravo"}</h1></div>
+    app.innerHTML=`<div class="hello endhead">${eco("happy","big")}<p class="eyebrow">${esc(GAMES[run.g].n)}</p><h1>${gs.planDone?"Percorso completato":"Bravo"}</h1></div>
     <div class="card"><p>${msg}</p>${gs.planDone&&S.mission&&S.mission.d===today()&&!S.mission.done?`<p class="note">Manca la missione di oggi, da fare nella vita vera: ${esc(S.mission.text)}</p>`:""}
     <div class="row"><button class="btn" id="home">Torna a Oggi</button><button class="btn ghost" id="more">Altro gioco</button></div></div>`;
     app.querySelector("#home").onclick=()=>go("oggi"); app.querySelector("#more").onclick=()=>go("giochi");
@@ -1125,7 +1247,7 @@ RENDER.conversazione=()=>{
     const n=userTurns(),last=gs.log[gs.log.length-1],canRetry=!gs.log.length||(last&&last.who==="io");
     const lastAi=[...gs.log].reverse().find(m=>m.who==="ai");
     app.innerHTML=head(esc(gs.scene),`Battuta ${Math.min(n+1,5)} di 5`)+`
-    <div class="card"><div class="chat">${gs.log.map((m,i)=>`<div class="msg ${m.who==="io"?"me":"ai"}">${esc(m.t)}</div>${m.who==="io"&&i===gs.log.length-2&&gs.meglio?`<p class="note small" style="align-self:flex-end;max-width:90%">Più naturale: ${esc(gs.meglio)}</p>`:""}`).join("")}
+    <div class="card"><div style="display:flex;justify-content:center">${eco(gs.busy?"think":"listen","small")}</div><div class="chat">${gs.log.map((m,i)=>`<div class="msg ${m.who==="io"?"me":"ai"}">${esc(m.t)}</div>${m.who==="io"&&i===gs.log.length-2&&gs.meglio?`<p class="note small" style="align-self:flex-end;max-width:90%">Più naturale: ${esc(gs.meglio)}</p>`:""}`).join("")}
     ${gs.busy?`<div class="msg ai"><span class="spin"></span></div>`:""}</div>
     ${gs.err?`<p class="no small">${esc(gs.err)}</p>${canRetry?`<button class="btn soft" id="retry">Riprova</button>`:""}`:""}
     ${!gs.busy?`
@@ -1233,7 +1355,7 @@ function goalTodayHTML(){
   if(!S.goal) h+=`<div class="card"><h2>Dai un obiettivo all'app</h2><p class="small muted">Scrivi cosa vuoi ottenere: il Cervello costruisce un percorso di 4 settimane e lo corregge ogni settimana in base a come vai.</p><button class="btn soft" id="togoal">Scrivi il mio obiettivo</button></div>`;
   else if(st) h+=`<div class="card"><div class="row between"><p class="eyebrow">Settimana ${w+1} di ${S.goal.steps.length}</p><span class="tag">${esc(FOCUS[st.focus])}</span></div>
     <h2>${esc(st.titolo)}</h2><p class="small muted">${esc(st.perche)}</p>
-    <div class="steps">${S.goal.steps.map((_,i)=>`<i class="${i<=w?"on":""}"></i>`).join("")}</div>
+    ${roadHTML(S.goal.steps,w)}
     <p class="small">Obiettivo: <b>${esc(S.goal.text)}</b></p></div>`;
   else if(w>=S.goal.steps.length&&!checkinDue()) h+=`<div class="card"><h2>Percorso finito</h2><p class="small muted">Hai completato tutte le settimane. Nel Cervello puoi creare un nuovo percorso.</p><button class="btn soft" id="togoal">Nuovo percorso</button></div>`;
   return h;
@@ -1303,7 +1425,8 @@ function goalCervelloHTML(){
     <button class="btn wide" id="gmake">Crea il mio percorso</button>${goalErr?`<p class="no small">${esc(goalErr)}</p>`:""}</div>`;
   const w=goalWeek(), R=S.goal.reviews.slice(-1)[0];
   return `<div class="card brain"><p class="eyebrow">Il mio obiettivo</p><h2>${esc(S.goal.text)}</h2>${S.goal.why?`<p class="small muted">Perché: ${esc(S.goal.why)}</p>`:""}
-    <div class="plan">${S.goal.steps.map((s,i)=>`<div class="pitem ${i<w?"done":""}"><span class="tick">${i<w?"✓":i+1}</span><div><div class="pn">${esc(s.titolo)}</div><div class="small muted">${esc(FOCUS[s.focus])} · scena: ${esc(s.scena)}</div></div>${i===w?'<span class="tag w">ora</span>':""}</div>`).join("")}</div>
+    ${roadHTML(S.goal.steps,w)}
+    <div class="plan">${S.goal.steps.map((s,i)=>`<div class="pitem ${i<w?"done":""} cat-${s.focus}"><span class="gicon" style="font-weight:700">${i+1}</span><div><div class="pn">${esc(s.titolo)}</div><div class="small muted">${esc(FOCUS[s.focus])} · scena: ${esc(s.scena)}</div></div>${i===w?'<span class="tag w">ora</span>':""}</div>`).join("")}</div>
     ${R?`<p class="small"><b>Ultimo ragionamento:</b> ${esc(R.analisi)}</p>`:""}
     <p class="small muted">Ogni 7 giorni, in Oggi, ti chiedo com'è andata nella vita vera. Il Cervello usa la risposta per cambiare la settimana dopo.</p>
     ${goalConfirm?`<div class="two"><button class="btn" id="gdel">Sì, ricomincia</button><button class="btn ghost" id="gno">Annulla</button></div>`:`<button class="x" id="gchange" style="align-self:flex-start;padding-left:0">Cambia obiettivo</button>`}</div>`;
@@ -1329,9 +1452,9 @@ function afterHTML(){
   const tom=S.dict.filter(x=>(x.due||today())<=addDays(1)).length;
   return `<div class="card brain"><h2>E adesso?</h2><p class="small muted">Hai finito. Scegli tu come continuare, oppure fermati: anche il riposo fa parte dell'allenamento, perché il cervello fissa quello che hai imparato mentre dormi.</p>
   <div class="stack">
-    <button class="gcard" id="extra"><span class="tag w">punti doppi</span><b>Sfida extra</b><span>2 giochi nuovi, mescolati${sample?", con il Cervello":""}</span></button>
-    ${sample?`<button class="gcard" data-after="conversazione"><span class="tag">parlare</span><b>Conversazione</b><span>Allenati a una scena vera: bar, telefono, colloquio, amici</span></button>
-    <button class="gcard" data-after="studia"><span class="tag">studio</span><b>Studia un argomento</b><span>Una cosa per la scuola o per il lavoro: punti chiave e domande</span></button>`:""}
+    <button class="gcard cat-mini" id="extra"><span class="gtop">${gicon("minuto")}<span class="tag">punti doppi</span></span><b>Sfida extra</b><span>2 giochi nuovi, mescolati${sample?", con il Cervello":""}</span></button>
+    ${sample?`<button class="gcard cat-dialogo" data-after="conversazione"><span class="gtop">${gicon("conversazione")}<span class="tag">parlare</span></span><b>Conversazione</b><span>Allenati a una scena vera: bar, telefono, colloquio, amici</span></button>
+    <button class="gcard cat-studio" data-after="studia"><span class="gtop">${gicon("studia")}<span class="tag">studio</span></span><b>Studia un argomento</b><span>Una cosa per la scuola o per il lavoro: punti chiave e domande</span></button>`:""}
   </div>${tom?`<p class="small muted">Domani ti aspettano ${tom} ${tom===1?"cosa":"cose"} da ripassare.</p>`:""}</div>`;
 }
 function rOggi(){
@@ -1342,7 +1465,7 @@ function rOggi(){
   const plan=hasEnergy?S.plan:null;
   const left=plan?plan.items.filter(x=>!x.done):[];
   const mins=left.reduce((a,x)=>a+GAMES[x.g].min,0);
-  app.innerHTML=`<div class="hero"><div class="hello"><p class="eyebrow">${new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})}</p><h1>${h<12?"Buongiorno":h<18?"Buon pomeriggio":"Buonasera"}</h1></div>${WAVE_HTML}</div>
+  app.innerHTML=`<div class="hero">${eco("idle")}<div class="hello"><p class="eyebrow">${new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})}</p><h1>${h<12?"Buongiorno":h<18?"Buon pomeriggio":"Buonasera"}</h1><p class="say">${esc(ecoSay())}</p></div></div>
   ${goalTodayHTML()}
   ${minuteHTML()}
   <div class="card"><div class="row between"><div class="row" style="gap:8px;align-items:baseline">${FLAME_SVG(streak()>0)}<span class="big">${streak()}</span><span class="muted">${streak()===1?"giorno":"giorni"} di fila</span></div><span class="tag">Livello ${lvl}</span></div>
@@ -1350,7 +1473,7 @@ function rOggi(){
   ${!hasEnergy?`<div class="card"><h2>Hai più tempo?</h2><p class="small muted">Dimmi come ti senti e ti preparo un percorso più lungo.</p>
     <div class="energy"><button data-e="stanco">Stanco<span>2 giochi</span></button><button data-e="normale">Normale<span>3 giochi</span></button><button data-e="carico">Carico<span>4 giochi</span></button></div></div>`
   :`<div class="card"><div class="row between"><h2>Il percorso di oggi</h2><span class="muted small">${left.length?"circa "+mins+" min":"completato"}</span></div>
-    <div class="plan">${plan.items.map((x,i)=>`<div class="pitem ${x.done?"done":""}"><span class="tick">${x.done?"✓":""}</span><div><div class="pn">${esc(GAMES[x.g].n)}</div><div class="small muted">${esc(GAMES[x.g].d)}</div></div>${x.done?"":`<button class="btn ghost sm" data-swap="${i}" aria-label="Cambia ${esc(GAMES[x.g].n)}">Cambia</button>`}</div>`).join("")}</div>
+    <div class="plan">${plan.items.map((x,i)=>`<div class="pitem ${x.done?"done":""} ${catOf(x.g)}">${gicon(x.g)}<div><div class="pn">${esc(GAMES[x.g].n)}</div><div class="small muted">${esc(GAMES[x.g].d)}</div></div>${x.done?"":`<button class="btn ghost sm" data-swap="${i}" aria-label="Cambia ${esc(GAMES[x.g].n)}">Cambia</button>`}</div>`).join("")}</div>
     ${left.length?`<button class="btn wide" id="start">${left.length<plan.items.length?"Continua":"Inizia"}</button>`:`<p class="ok">${plan.extra?"Sfida extra completata.":"Percorso completato. Ottimo lavoro."}</p>`}</div>`}
   ${hasEnergy&&!left.length?afterHTML():""}
   <div class="card"><div class="row between"><h2>Missione${(S.mission.n||1)>1?" "+S.mission.n:""} di oggi</h2><span class="tag w">vita vera</span></div><p>${esc(S.mission.text)}</p>
@@ -1386,7 +1509,7 @@ function rGiochi(){
   const due=dueCards().length;
   app.innerHTML=`<div class="hello"><p class="eyebrow">Giochi</p><h1>Scegli tu</h1></div>
   <p class="muted">Ogni gioco dura 2 o 3 minuti. Cambiare spesso tipo di esercizio aiuta a ricordare meglio e a non annoiarsi.</p>
-  <div class="ggrid">${Object.keys(GAMES).filter(g=>!GAMES[g].hidden&&(!GAMES[g].ai||sample||!sampleChecked)).map(g=>`<button class="gcard" data-g="${g}"><span class="tag ${GAMES[g].cat==="memoria"?"w":""}">${GAMES[g].cat}</span><b>${esc(GAMES[g].n)}</b><span>${esc(GAMES[g].d)}${g==="ripasso"?` · ${due} da fare`:""}</span></button>`).join("")}</div>
+  <div class="ggrid">${Object.keys(GAMES).filter(g=>!GAMES[g].hidden&&(!GAMES[g].ai||sample||!sampleChecked)).map(g=>`<button class="gcard ${catOf(g)}" data-g="${g}"><span class="gtop">${gicon(g)}<span class="tag">${GAMES[g].cat}</span></span><b>${esc(GAMES[g].n)}</b><span>${esc(GAMES[g].d)}${g==="ripasso"?` · ${due} da fare`:""}</span></button>`).join("")}</div>
   <details><summary>Frasi salvagente</summary><p class="muted small" style="margin-top:8px">Quando le parole si mischiano, fermarsi va bene. Queste frasi ti danno tempo senza perdere il filo:</p><ul>${SALVAGENTE.map(x=>`<li>${x}</li>`).join("")}</ul></details>`;
   app.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>play(b.dataset.g,null));
 }
@@ -1442,7 +1565,7 @@ Rispondi SOLO con JSON: {"italiano":"...","pezzi":["..."],"parole":[{"dialetto":
 let chatBusy=false;
 function rCervello(){
   const off=sampleChecked&&!sample;
-  app.innerHTML=`<div class="hello"><p class="eyebrow">Il Cervello</p><h1>Il tuo allenatore</h1></div>
+  app.innerHTML=`<div class="hero">${eco(chatBusy?"think":"idle")}<div class="hello"><p class="eyebrow">Il Cervello</p><h1>Ciao, sono Eco</h1><p class="say">Sono il tuo allenatore. Chiedimi quello che vuoi, anche in dialetto.</p></div></div>
   <p class="muted">Il Cervello ti ascolta e ragiona con l'intelligenza artificiale. Guarda come vai, crea esercizi sui tuoi interessi e ti aiuta a trovare il metodo giusto anche per studiare.</p>
   ${off?`<p class="note">Il Cervello non è ancora collegato: aggiungi la chiave Gemini in Impostazioni, qui sotto. Gli altri giochi funzionano lo stesso.</p>`:""}
   ${goalCervelloHTML()}
@@ -1491,8 +1614,9 @@ Rispondi SOLO con JSON: {"frasi":[{"pezzi":["..."]}],"indovina":[{"w":"...","c":
   const send=app.querySelector("#send");
   send.onclick=async()=>{const qEl=app.querySelector("#q"),q=qEl.value.trim();if(!q||!sample||chatBusy)return;
     chatBusy=true;send.disabled=true;S.chat.push({role:"user",content:q});cap(S.chat,20);qEl.value="";
-    const chat=app.querySelector("#chat");chat.insertAdjacentHTML("beforeend",`<div class="msg me">${esc(q)}</div><div class="msg ai" id="live">…</div>`);
+    const chat=app.querySelector("#chat");chat.insertAdjacentHTML("beforeend",`<div class="msg me">${esc(q)}</div><div class="msg ai" id="live"><span class="spin"></span></div>`);
     const live=document.getElementById("live");live.scrollIntoView({block:"nearest"});
+    const ecoEl=app.querySelector(".hero .eco");if(ecoEl)ecoEl.outerHTML=eco("think");
     const sys=`Sei il "Cervello", un allenatore di studio e di parola per questo ragazzo. ${ctx()}
 Regole: rispondi in italiano semplice; frasi corte; massimo 120 parole salvo richiesta; usa elenchi numerati brevi quando spieghi passi; niente emoji; tono da amico, mai da professore. Se chiede come studiare, proponi metodi con prove scientifiche (ricordare a memoria con domande, ripasso distanziato, mappe, spiegare a voce) adattati a DSA e a chi si annoia: sessioni brevi, varietà, piccoli obiettivi. Se scrive in dialetto, rispondi in italiano e, se utile, mostragli come dirlo in italiano. Se parla di problemi di salute o di forte disagio, consiglia con gentilezza di parlarne con un medico o una persona di fiducia.`;
     let hist=S.chat.slice();while(hist.length&&hist[0].role!=="user")hist.shift();
@@ -1500,7 +1624,8 @@ Regole: rispondi in italiano semplice; frasi corte; massimo 120 parole salvo ric
     try{const r=await sample(msgs,{cache:false,onText:u=>{live.textContent=u.text}});
       S.chat.push({role:"assistant",content:r.text});cap(S.chat,20);save();live.removeAttribute("id")}
     catch(e){S.chat.pop();live.textContent=noClaudeMsg(e);live.removeAttribute("id");save()}
-    chatBusy=false;send.disabled=false;const c=app.querySelector("#clr");if(c)c.disabled=!S.chat.length};
+    chatBusy=false;send.disabled=false;const c=app.querySelector("#clr");if(c)c.disabled=!S.chat.length;
+    const ecoEl2=app.querySelector(".hero .eco");if(ecoEl2)ecoEl2.outerHTML=eco("happy")};
 }
 
 /* ================= PROGRESSI ================= */
@@ -1530,8 +1655,11 @@ function rProg(){
   <p class="small muted">I progressi sono salvati su questo telefono. Puoi farne un backup in Cervello > Impostazioni.</p>`;
 }
 
+setEcoMini();try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",setEcoMini)}catch(e){}
 let setup="";try{setup=localStorage.getItem("vc-setup")||""}catch(e){}
+if("scrollRestoration" in history)history.scrollRestoration="manual";
 if(!GKEY&&!setup)renderLogin();else{render();boot()}
+window.scrollTo(0,0);
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(r=>r.update()).catch(()=>{});
   let reloaded=false;const hadCtrl=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!hadCtrl||reloaded)return;if(Rec.on||tab==="play"){pendingReload=true;return}reloaded=true;location.reload()});}
 </script>
