@@ -544,6 +544,16 @@ select{font:inherit;color:var(--fg);background:color-mix(in srgb,var(--fg) 5%,va
 .chest.open .ct{transform:translateY(-10px) rotate(-12deg);transform-origin:10% 100%}
 
 
+.livetxt{margin:8px 2px 0;font-size:15px;line-height:1.4;color:var(--ink);opacity:.8;min-height:1.4em}
+.livetxt:empty{display:none}
+.brain ul{margin:4px 0 10px;padding-left:20px}.brain li{margin:3px 0}
+.chunkpool{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.chunkpool button{font:inherit;font-size:16px;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.chunkpool button.no{animation:shake .35s}
+.built{min-height:56px;padding:12px 14px;border-radius:14px;background:var(--soft,rgba(127,127,127,.08));font-size:18px;line-height:1.5}
+@keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.wchips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.wchips span{padding:5px 10px;border-radius:999px;background:var(--soft,rgba(127,127,127,.1));font-size:14px}
+.gap{display:inline-block;min-width:70px;border-bottom:2px solid currentColor;text-align:center;font-weight:600}
 </style>
 </head>
 <body>
@@ -628,7 +638,7 @@ const STORIE=[
 /* ================= STATO ================= */
 const KEY="voce-chiara-v1";
 const blank=()=>({v:2,updatedAt:0,xp:0,speak:{lvl:1,ups:0,log:[]},mem:{span:3,ok:0,best:3,mode:"parole",log:[]},games:[],dict:[],
-  extra:{frasi:[],indovina:[],spiega:[],missioni:[]},days:{},chunky:true,dialetto:"",interessi:"",energy:null,plan:null,mission:null,tip:null,chat:[],tts:true,precise:false});
+  extra:{frasi:[],indovina:[],spiega:[],missioni:[]},days:{},chunky:true,dialetto:"",interessi:"",energy:null,plan:null,mission:null,tip:null,chat:[],tts:true,precise:false,errs:[],brain:null});
 function migrate(o){
   const s=Object.assign(blank(),o);
   if(Array.isArray(s.extra)) s.extra={frasi:s.extra,indovina:[],spiega:[],missioni:[]};
@@ -664,7 +674,7 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
-const APP_VERSION="v24";
+const APP_VERSION="v25";
 let AUDIO_OK=true;try{AUDIO_OK=localStorage.getItem("vc-noaudio")!=="1"}catch(e){}
 function setAudioOk(v){AUDIO_OK=v;try{v?localStorage.removeItem("vc-noaudio"):localStorage.setItem("vc-noaudio","1")}catch(e){}}
 let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
@@ -860,11 +870,18 @@ function wireLocalSettings(){
     catch(e){a.className="small no";a.textContent="Non è riuscito. "+(e&&e.detail?e.detail:"")}};
 }
 
+function viaText(input,live){
+  const note=`[L'audio non si può allegare: qui c'è il testo scritto in automatico dal telefono mentre parlava. Può contenere errori del riconoscimento vocale: non contarli come errori suoi e non giudicare la pronuncia. Dove sotto si parla di "audio allegato", usa questo testo.]\nTesto: """${live}"""\n\n`;
+  if(Array.isArray(input)){const c=input.slice();for(let i=c.length-1;i>=0;i--)if(c[i].role!=="assistant"){c[i]=Object.assign({},c[i],{content:note+c[i].content});break}return c}
+  return note+input}
 function makeSample(){
   const ask=async(input,opts,json)=>{
+    const au=opts.audio,hasLive=au&&au.live&&au.live.split(" ").length>=2;
+    if(au&&hasLive&&(au.silent||!GKEY))return ask(viaText(input,au.live),Object.assign({},opts,{audio:null}),json);
     if(localFits(opts)){try{return await localAsk(input,json)}catch(e){if(!GKEY)throw e}}
     try{const d=await gemini(input,json,opts.audio,null,opts.modelTier);if(json&&d.json==null)throw {code:"bad_json"};return d}
-    catch(e){if(S.localAI&&hasWebGPU()&&!opts.audio&&CLOUD_FAIL.includes(e&&e.code)){try{return await localAsk(input,json)}catch(_){}}throw e}
+    catch(e){if(hasLive&&!["no_key","bad_key","offline"].includes(e&&e.code)){prog("Uso le parole scritte dal telefono…");return ask(viaText(input,au.live),Object.assign({},opts,{audio:null}),json)}
+      if(S.localAI&&hasWebGPU()&&!opts.audio&&CLOUD_FAIL.includes(e&&e.code)){try{return await localAsk(input,json)}catch(_){}}throw e}
   };
   const f=async(input,opts={})=>{const d=await ask(input,opts,false);const text=String(d.text||"");if(opts.onText)opts.onText({text,delta:text});return {text,truncated:false}};
   f.json=async(input,opts={})=>{const d=await ask(input,opts,true);return d.json};
@@ -873,6 +890,7 @@ function makeSample(){
 function pushState(){}
 function boot(){sample=(GKEY||(S.localAI&&hasWebGPU()))?makeSample():null;sampleChecked=true;if(tab!=="play")render();
   if(sample&&S.mission&&S.mission.d===today()&&!S.mission.done&&S.mission.src!=="cervello")aiMission();
+  if(sample)setTimeout(()=>brainThink(false).then(ok=>{if(ok&&tab==="cervello")render()}),5000);
   if(S.localAI&&hasWebGPU()&&S.localReady===localModelId())setTimeout(()=>{loadLocal().catch(()=>{})},2500)}
 async function saveKey(k){
   k=String(k||"").replace(/\s+/g,"").replace(/^["']|["']$/g,"");if(!k)throw {code:"no_key"};
@@ -934,8 +952,61 @@ Interessi: ${S.interessi||"non indicati"}.
 Livello lettura a voce: ${S.speak.lvl}/5. Memoria: sequenze da ${S.mem.span}. Giorni di fila: ${streak()}. Energia oggi: ${S.energy&&S.energy.d===today()?S.energy.v:"non indicata"}.
 Missioni nella vita vera: gradino ${(S.mis&&S.mis.step)||1} di 6 (${SCALA_MIS[((S.mis&&S.mis.step)||1)-1].n}). Giochi che gli piacciono di più: ${g.liked.join(", ")||"ancora pochi dati"}. Giochi che lo annoiano: ${g.bored.join(", ")||"nessuno"}.${S.goal?`
 Il suo obiettivo: "${S.goal.text}"${S.goal.why?" (perché: "+S.goal.why+")":""}. Settimana ${goalWeek()+1} di ${S.goal.steps.length}${curStep()?": "+curStep().titolo:""}.
-Facilità a parlare italiano con le persone (1-5), nelle ultime rilevazioni: ${S.goal.checkins.slice(-4).map(c=>c.score).join(", ")||"nessuna"}.`:""}`;
+Facilità a parlare italiano con le persone (1-5), nelle ultime rilevazioni: ${S.goal.checkins.slice(-4).map(c=>c.score).join(", ")||"nessuna"}.`:""}${brainCtx()}`;
 }
+
+function noteErr(detto,meglio,g){detto=String(detto||"").trim();meglio=String(meglio||"").trim();if(!detto||!meglio||detto===meglio)return;
+  S.errs=S.errs||[];S.errs.push({d:today(),detto:detto.slice(0,200),meglio:meglio.slice(0,200),g});cap(S.errs,40);save()}
+function brainCtx(){const b=S.brain;if(!b)return "";
+  return `
+Cosa ha capito il Cervello di lui: da allenare: ${b.allenare.join("; ")||"-"}. Parole da sistemare: ${b.parole.map(p=>p.s+" → "+p.g).join(", ")||"-"}.`}
+let brainBusy=false;
+async function brainThink(force){
+  if(!sample||brainBusy)return false;
+  if(!force){if(S.games.length<6)return false;if(S.brain&&S.brain.d&&daysBetween(S.brain.d,today())<3)return false}
+  brainBusy=true;
+  try{
+    const since=addDays(-14),per={};
+    S.games.filter(x=>x.d>=since).forEach(x=>{const k=GAMES[x.g]?GAMES[x.g].n:x.g;const p=per[k]||(per[k]={fatti:0,difficili:0,facili:0,annoiato:0});
+      if(x.b)p.annoiato++;else{p.fatti++;if(x.r===0)p.difficili++;if(x.r===2)p.facili++}});
+    const errs=(S.errs||[]).slice(-15).map(e=>`"${e.detto}" → "${e.meglio}"`).join("\n")||"nessuna";
+    const dial=S.dict.filter(x=>x.kind!=="studio").slice(-10).map(x=>`"${x.dial}" → "${x.it}"`).join("\n")||"nessuna";
+    const mis=((S.mis&&S.mis.hist)||[]).slice(-8).map(h=>h.res+(h.note?" ("+h.note+")":"")).join(", ")||"nessuna";
+    const r=await sample.json(`Sei il "Cervello" di un'app che allena un ragazzo a parlare in italiano e a ricordare. Ragiona sui suoi dati e capisci di cosa ha davvero bisogno adesso.
+${ctx()}
+Giochi negli ultimi 14 giorni: ${JSON.stringify(per)}
+Giorni attivi negli ultimi 14: ${Object.keys(S.days).filter(d=>d>=since).length}.
+Frasi che ha detto a voce e versione migliore:
+${errs}
+Frasi trasformate dal dialetto:
+${dial}
+Missioni nella vita vera, com'è andata: ${mis}
+Rispondi SOLO con JSON: {"forti":["..."],"allenare":["..."],"parole":[{"sbagliata":"...","giusta":"..."}],"focus":"parlare|parole|memoria|dialogo|studio","piano":"...","consiglio":"..."}
+Regole: "forti" massimo 3 cose che fa bene (max 10 parole l'una). "allenare" massimo 3 cose concrete da allenare (max 12 parole l'una). "parole": massimo 6 parole o espressioni che sbaglia davvero, prese dai dati sopra, altrimenti lista vuota. "focus": il tipo di esercizio che gli serve di più adesso. "piano": cosa farai tu nei prossimi giorni per lui, dandogli del tu, max 30 parole. "consiglio": 1 consiglio pratico per oggi, max 20 parole. Non inventare cose che non sono nei dati; se i dati sono pochi, dillo con semplicità.`,{modelTier:"complex"});
+    const arr=(a,n)=>(Array.isArray(a)?a:[]).map(String).filter(Boolean).slice(0,n).map(x=>x.slice(0,140));
+    S.brain={d:today(),forti:arr(r.forti,3),allenare:arr(r.allenare,3),
+      parole:(Array.isArray(r.parole)?r.parole:[]).filter(p=>p&&p.sbagliata&&p.giusta&&p.sbagliata!==p.giusta).slice(0,6).map(p=>({s:String(p.sbagliata).slice(0,60),g:String(p.giusta).slice(0,60)})),
+      focus:FOCUS[r.focus]?r.focus:"",piano:String(r.piano||"").slice(0,260),consiglio:String(r.consiglio||"").slice(0,200)};
+    save();return true;
+  }catch(e){if(force)throw e;return false}finally{brainBusy=false}
+}
+function brainHTML(){const b=S.brain;
+  const li=a=>`<ul>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+  return `<div class="card brain"><h2>Cosa ho capito di te</h2>${b?`<p class="small muted">Aggiornato ${b.d===today()?"oggi":"il "+b.d.split("-").reverse().slice(0,2).join("/")}. Ogni 3 giorni ci ripenso da solo, guardando come vai.</p>
+    ${b.forti.length?`<p class="eyebrow">Ti viene bene</p>${li(b.forti)}`:""}
+    ${b.allenare.length?`<p class="eyebrow">Alleniamo</p>${li(b.allenare)}`:""}
+    ${b.parole.length?`<p class="eyebrow">Parole da sistemare</p>${b.parole.map(p=>`<div class="pair"><span class="muted">${esc(p.s)}</span><span>→</span><span>${esc(p.g)}</span></div>`).join("")}<button class="btn soft wide" id="brainrip">Mettile nel Ripasso</button>`:""}
+    ${b.piano?`<p class="note">${esc(b.piano)}</p>`:""}${b.consiglio?`<p><b>Per oggi:</b> ${esc(b.consiglio)}</p>`:""}
+    ${b.focus?`<p class="small muted">Nei prossimi giorni ti propongo più giochi di: <b>${esc(FOCUS[b.focus])}</b>.</p>`:""}`
+  :`<p class="small muted">Dopo qualche gioco ragiono su come vai e ti dico cosa ho capito: cosa ti viene bene, cosa allenare, quali parole sistemare. Poi scelgo i giochi in base a questo.</p>`}
+  <button class="btn wide" id="brainup" ${sample?"":"disabled"}>${b?"Ripensaci adesso":"Ragiona su di me"}</button><p id="brainmsg" class="small muted" hidden></p>
+  <label class="toggle"><input type="checkbox" id="livetg" ${S.live!==false?"checked":""} ${SR?"":"disabled"}> Scrivi le mie parole mentre parlo${SR?"":" (non disponibile qui)"}</label></div>`}
+document.addEventListener("click",async e=>{const t=e.target.closest&&e.target.closest("#brainup,#brainrip");if(!t)return;
+  if(t.id==="brainrip"){let n=0;((S.brain&&S.brain.parole)||[]).forEach(p=>{if(!S.dict.some(x=>x.it===p.g)){addCard(p.s,p.g,[p.g]);n++}});save();toast(n?n+(n===1?" parola":" parole")+" nel Ripasso":"Sono già nel Ripasso");return}
+  const m=document.getElementById("brainmsg");t.disabled=true;if(m){m.hidden=false;m.innerHTML='<span class="spin"></span> Ci sto pensando…'}
+  try{await brainThink(true);toast("Ecco cosa ho capito di te")}catch(err){if(m)m.textContent=errMsg(err);t.disabled=false;return}
+  if(tab==="cervello")render()});
+document.addEventListener("change",e=>{if(e.target&&e.target.id==="livetg"){S.live=e.target.checked;save()}});
 
 /* ================= GIOCHI: METADATI ================= */
 const GAMES={
@@ -952,6 +1023,9 @@ const GAMES={
   ripasso:{n:"Ripasso",cat:"ripasso",d:"Le tue frasi e le domande di studio, nel momento giusto per non dimenticarle",min:2},
   conversazione:{n:"Conversazione",cat:"dialogo",d:"Una scena vera: il Cervello fa l'altra persona e ti ascolta",min:5,ai:true},
   studia:{n:"Studia un argomento",cat:"studio",d:"Scrivi cosa devi imparare: punti chiave e domande",min:6,ai:true},
+  giusta:{n:"Parola giusta",cat:"parole",d:"Scegli la parola giusta, poi dì la frase ad alta voce",min:2,easy:true},
+  ordine:{n:"Frase in ordine",cat:"parlare",d:"Rimetti in ordine i pezzi della frase, poi dilla",min:2,easy:true},
+  fiume:{n:"Fiume di parole",cat:"parole",d:"30 secondi: dì più parole che puoi di un tipo",min:2},
   minuto:{n:"1 minuto",cat:"mini",d:"Una cosa sola, piccola",min:1,hidden:true},
   voce:{n:"A voce con Claude",cat:"dialogo",d:"Conversazione vocale nell'app Claude",min:5,hidden:true}
 };
@@ -990,6 +1064,7 @@ function weight(g){
   const p=prefs(); let w=1/(1+1.5*(p.bor[g]||0));
   if(S.games.some(x=>x.d===today()&&x.g===g&&!x.b)) w*=.4;
   if(S.energy&&S.energy.d===today()&&S.energy.v==="stanco"&&GAMES[g].easy) w*=2;
+  if(S.brain&&S.brain.focus&&GAMES[g].cat===S.brain.focus)w*=1.6;
   const st=curStep(); if(st){ if(GAMES[g].cat===st.focus) w*=2.5; else if(st.focus==="dialogo"&&GAMES[g].cat==="parlare") w*=1.5; }
   return w;
 }
@@ -1070,6 +1145,9 @@ function ecoSay(){
 }
 /* icone dei giochi */
 const GICONS={
+  giusta:'<path d="M4 12l5 5L20 6"/>',
+  ordine:'<rect x="3" y="4" width="8" height="5" rx="1.5"/><rect x="13" y="4" width="8" height="5" rx="1.5"/><rect x="3" y="15" width="18" height="5" rx="1.5"/><path d="M12 10v3"/>',
+  fiume:'<path d="M3 8c3-2 6 2 9 0s6-2 9 0M3 13c3-2 6 2 9 0s6-2 9 0M3 18c3-2 6 2 9 0s6-2 9 0"/>',
   leggi:'<path d="M3 5c3-1.3 6-1.3 9 .5 3-1.8 6-1.8 9-.5v13c-3-1.3-6-1.3-9 .5-3-1.8-6-1.8-9-.5z"/><path d="M12 5.5v13"/>',
   racconta:'<path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9h8M8 12h5"/>',
   spiega:'<circle cx="12" cy="12" r="8"/><path d="M6.5 6.5l11 11"/>',
@@ -1279,16 +1357,19 @@ function play(g,planIdx){clearTimers();abortRec();stopSpeak();run={g,planIdx,t0:
 function finish(r){
   clearTimers();
   S.games.push({d:today(),g:run.g,r});cap(S.games);
-  let pts=(run.planIdx!=null&&S.plan&&S.plan.extra)?20:10; if(S.double===today()){pts*=2;S.double=null}gainXP(pts); bump();
+  let pts=(run.planIdx!=null&&S.plan&&S.plan.extra)?20:10; if(S.double===today()){pts*=2;S.double=null}
+  const now=Date.now();S.combo=(S.comboT&&now-S.comboT<15*60e3)?(S.combo||1)+1:1;S.comboT=now;S.bestCombo=Math.max(S.bestCombo||0,S.combo);
+  const cb=S.combo>=3?Math.min(15,(S.combo-2)*5):0,lucky=Math.random()<.12?15:0;
+  gainXP(pts+cb+lucky); bump();
   let planDone=false;
   if(run.planIdx!=null&&S.plan&&S.plan.d===today()){
     S.plan.items[run.planIdx].done=true;
     const next=S.plan.items.findIndex(x=>!x.done);
     if(next<0){planDone=true;S.xp+=20}
     save();
-    if(!planDone){toast(`+${pts} punti. Avanti con il prossimo!`);setTimeout(checkBadges,700);return play(S.plan.items[next].g,next)}
+    if(!planDone){toast(`+${pts+cb+lucky} punti${cb?" · combo x"+S.combo:""}${lucky?" · sorpresa!":""}. Avanti!`);setTimeout(checkBadges,700);return play(S.plan.items[next].g,next)}
   } else save();
-  gs={end:true,planDone,r,pts};render();celebrate(planDone);setTimeout(checkBadges,700);
+  gs={end:true,planDone,r,pts,cb,lucky,combo:S.combo};render();celebrate(planDone);setTimeout(checkBadges,700);
 }
 function bored(){
   S.games.push({d:today(),g:run.g,b:1});cap(S.games);
@@ -1323,7 +1404,7 @@ function rPlay(){
   if(gs&&gs.end){
     const msg=gs.planDone?"Hai finito il percorso. +20 punti bonus.":gs.r===0?"Era difficile, e l'hai fatto lo stesso. È così che si migliora.":`Fatto. +${gs.pts||10} punti.`;
     app.innerHTML=`<div class="hello endhead">${eco("happy","big")}<p class="eyebrow">${esc(GAMES[run.g].n)}</p><h1>${gs.planDone?"Percorso completato":"Bravo"}</h1></div>
-    <div class="card"><p>${msg}</p>${gs.planDone&&S.mission&&S.mission.d===today()&&!S.mission.done?`<p class="note">Manca la missione di oggi, da fare nella vita vera: ${esc(S.mission.text)}</p>`:""}
+    <div class="card"><p>${msg}</p>${gs.cb?`<p class="note">Combo x${gs.combo}: +${gs.cb} punti, perché stai facendo un gioco dopo l'altro. Continua e sale ancora.</p>`:""}${gs.lucky?`<p class="note">Sorpresa! +15 punti extra.</p>`:""}${gs.planDone&&S.mission&&S.mission.d===today()&&!S.mission.done?`<p class="note">Manca la missione di oggi, da fare nella vita vera: ${esc(S.mission.text)}</p>`:""}
     <div class="row"><button class="btn" id="home">Torna a Oggi</button><button class="btn ghost" id="more">Altro gioco</button></div></div>`;
     app.querySelector("#home").onclick=()=>go("oggi"); app.querySelector("#more").onclick=()=>go("giochi");
     return;
@@ -1393,7 +1474,7 @@ RENDER.racconta=()=>{
     try{const r=await sample.json(`Sei un logopedista gentile. Un ragazzo di 18 anni con DSA (in dialetto gli viene più facile; in italiano, a voce, le parole gli si mischiano) racconta a voce questo argomento: "${gs.item.t}". Ascolta l'audio allegato.
 Rispondi SOLO con JSON {"sentito":"trascrizione fedele","voto":2 se ha raccontato in modo chiaro, 1 se con fatica o molte esitazioni, 0 se è riuscito a dire poco,"bene":"1 cosa fatta bene, max 15 parole","migliora":"riscrivi una sua frase in italiano più naturale, oppure dai 1 consiglio, max 22 parole"}`,{audio:a});
       if(gs!==my)return;
-      gs.fb={r:Math.max(0,Math.min(2,Math.round(+r.voto)||0)),sentito:String(r.sentito||"…"),bene:String(r.bene||""),migliora:String(r.migliora||"")};
+      gs.fb={r:Math.max(0,Math.min(2,Math.round(+r.voto)||0)),sentito:String(r.sentito||"…"),bene:String(r.bene||""),migliora:String(r.migliora||"")};if(r.sentito&&r.migliora&&/[a-z]/i.test(r.migliora))noteErr(r.sentito,r.migliora,"racconta");
     }catch(e){if(gs!==my)return;toast(errMsg(e))}
     render();
   },90);
@@ -1547,6 +1628,99 @@ function paintCoppie(){
   const sub=app.querySelector(".hello .muted");if(sub)sub.textContent=`Livello ${mlvl("coppie").lvl}. Trova le ${gs.n} coppie di parole che vanno insieme. Mosse: ${gs.moves}`;
 }
 
+/* ---- Parola giusta: gli errori più comuni, anche quelli che vengono dal dialetto ---- */
+const CONFUSE=[
+ {f:"Se ___ più tempo, verrei con voi.",ok:"avessi",no:["avrei","avevo"]},
+ {f:"Ho incontrato Marco e ___ ho detto di venire.",ok:"gli",no:["le","li"]},
+ {f:"Ho visto Giulia e ___ ho dato il libro.",ok:"le",no:["gli","la"]},
+ {f:"Domani ___ una festa in piazza.",ok:"c'è",no:["ce","cè"]},
+ {f:"___ il tuo numero di telefono?",ok:"Qual è",no:["Qual'è","Cual è"]},
+ {f:"Marco ___ fame.",ok:"ha",no:["a","è"]},
+ {f:"Stasera vado ___ Fermo.",ok:"a",no:["ha","in"]},
+ {f:"Ieri ___ andato al mare.",ok:"sono",no:["ho","so"]},
+ {f:"Ieri sera ho ___ una pizza.",ok:"mangiato",no:["magnato","mangiando"]},
+ {f:"Ci vediamo ___ otto.",ok:"alle",no:["a le","al"]},
+ {f:"Ti ___ visto ieri al bar.",ok:"ho",no:["o","hai"]},
+ {f:"Vorrei ___ caffè, per favore.",ok:"un",no:["uno","un'"]},
+ {f:"È ___ amica di mia sorella.",ok:"un'",no:["un","una'"]},
+ {f:"Stamattina mi ___ alzato tardi.",ok:"sono",no:["ho","so"]},
+ {f:"Mio fratello è più alto ___ me.",ok:"di",no:["che","de"]},
+ {f:"Domani piove, ___ resto a casa.",ok:"quindi",no:["però","mentre"]},
+ {f:"Non so ___ venire stasera.",ok:"se",no:["si","sé"]},
+ {f:"Devo ___ la macchina dal meccanico.",ok:"portare",no:["portà","porta"]},
+ {f:"Ho ___ le chiavi sul tavolo.",ok:"lasciato",no:["lassato","lasciando"]},
+ {f:"Quando ___ piccolo giocavo sempre a calcio.",ok:"ero",no:["sarei","fossi"]},
+ {f:"Spero che domani ___ bel tempo.",ok:"faccia",no:["fa","farebbe"]},
+ {f:"Mi ___ piaciuto molto il film.",ok:"è",no:["ha","so"]},
+ {f:"Ne ho ___ tre, di biglietti.",ok:"presi",no:["preso","prese"]},
+ {f:"Quel ragazzo ___ conosco da anni.",ok:"lo",no:["gli","ne"]},
+ {f:"Dobbiamo andare ___ quella parte.",ok:"da",no:["de","di"]},
+ {f:"Non ho capito ___ hai detto.",ok:"cosa",no:["che cosa che","quello cosa"]}];
+INIT.giusta=()=>{const L=mlvl("giusta").lvl,nopt=L>=3?3:2;
+  const mine=((S.brain&&S.brain.parole)||[]).slice(0,2).map(p=>({f:"Come si dice in italiano? ___",ok:p.g,no:[p.s],mine:1}));
+  const items=shuffle(mine.concat(shuffle(CONFUSE).slice(0,5-mine.length))).map(x=>({...x,opts:shuffle([x.ok].concat(x.no.slice(0,nopt-1)))}));
+  gs={items,i:0,score:0,pick:null}};
+RENDER.giusta=()=>{const it=gs.items[gs.i],L=mlvl("giusta").lvl,sub=`Livello ${L} · ${gs.i+1} di ${gs.items.length}${it.mine?" · dalle tue parole":""}`;
+  const full=it.f.replace("___",it.ok);
+  if(gs.pick==null){app.innerHTML=head("Parola giusta",sub)+`<div class="card"><p class="big" style="font-size:22px;line-height:1.5">${esc(it.f).replace("___",'<span class="gap">?</span>')}</p>
+    <div class="${it.opts.length>2?"":"two"}" style="display:grid;gap:8px;${it.opts.length>2?"grid-template-columns:1fr 1fr 1fr":""}">${it.opts.map((o,i)=>`<button class="btn soft" data-o="${i}">${esc(o)}</button>`).join("")}</div></div>${boredBtn()}`;
+    app.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{gs.pick=it.opts[+b.dataset.o];if(gs.pick===it.ok)gs.score++;speak(full);render()});return}
+  const ok=gs.pick===it.ok,last=gs.i>=gs.items.length-1;
+  app.innerHTML=head(ok?"Giusto!":"Quasi",sub)+`<div class="card"><p style="font-size:20px;line-height:1.5">${esc(full)}</p>
+    ${ok?"":`<p class="small muted">Hai scelto “${esc(gs.pick)}”. Quella giusta è “${esc(it.ok)}”.</p>`}
+    <p class="note">Ora dilla ad alta voce, con calma. Dirla con la bocca la fissa meglio che leggerla.</p>
+    <button class="btn wide" id="nx">${last?"Fine":"L'ho detta, avanti"}</button></div>`;
+  app.querySelector("#nx").onclick=()=>{if(last){const n=gs.items.length,r=gs.score===n?2:gs.score>=n-2?1:0;mAdapt("giusta",r);finish(r);return}gs.i++;gs.pick=null;render()};
+};
+
+/* ---- Frase in ordine ---- */
+INIT.ordine=()=>{const L=mlvl("ordine").lvl,keys=Object.keys(FRASI).map(Number).sort((a,b)=>a-b);
+  const lv=keys[Math.min(keys.length-1,L)]||keys[keys.length-1];
+  const pool=FRASI[lv].map(chunks).filter(c=>c.length>=3);
+  gs={items:shuffle(pool.length?pool:FRASI[keys[keys.length-1]].map(chunks)).slice(0,3),i:0,placed:[],err:0,bad:null};gs.pool=shuffle(gs.items[0].map((_,k)=>k))};
+RENDER.ordine=()=>{const it=gs.items[gs.i],L=mlvl("ordine").lvl,sub=`Livello ${L} · frase ${gs.i+1} di ${gs.items.length}`,done=gs.placed.length===it.length;
+  app.innerHTML=head(done?"Ecco la frase":"Frase in ordine",sub+(done?"":". Tocca i pezzi nell'ordine giusto."))+`<div class="card">
+    <div class="built">${gs.placed.map(k=>esc(it[k])).join(" ")||'<span class="muted">…</span>'}</div>
+    ${done?`<p class="note">Ora dilla ad alta voce, un pezzo alla volta, respirando tra un pezzo e l'altro.</p><button class="btn wide" id="nx">${gs.i>=gs.items.length-1?"Fine":"L'ho detta, avanti"}</button>`
+    :`<div class="chunkpool">${gs.pool.filter(k=>!gs.placed.includes(k)).map(k=>`<button data-k="${k}" class="${gs.bad===k?"no":""}">${esc(it[k])}</button>`).join("")}</div>`}</div>${done?"":boredBtn()}`;
+  gs.bad=null;
+  app.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{const k=+b.dataset.k,want=gs.placed.length;
+    if(k===want||it[k]===it[want]){gs.placed.push(k===want?k:want);if(gs.placed.length===it.length)speak(it.join(" "))}else{gs.err++;gs.bad=k}render()});
+  const nx=app.querySelector("#nx");if(nx)nx.onclick=()=>{if(gs.i>=gs.items.length-1){const r=gs.err===0?2:gs.err<=3?1:0;mAdapt("ordine",r);finish(r);return}
+    gs.i++;gs.placed=[];gs.pool=shuffle(gs.items[gs.i].map((_,k)=>k));render()};
+};
+
+/* ---- Fiume di parole: allena a trovare le parole in fretta ---- */
+const CATEGORIE=["animali","cose che trovi in cucina","cibi e piatti","vestiti","mestieri","sport","cose verdi","cose che trovi in un bagno","oggetti della tua camera","cose che vedi in paese","cose che trovi a una sagra","mezzi di trasporto","parti del corpo","cose che si fanno in estate","verbi di movimento, come correre","cose che fanno rumore"];
+const STOP=new Set("e ed poi allora ehm eh ah cioè il lo la i gli le l un una uno di da in con su per tra fra che non mi ti si ci vi è ho ha sono anche ma o oppure boh tipo dunque quindi così poi altro ancora come cosa basta niente insomma ok va bene sì no del della dei delle al alla ai alle nel nella".split(" "));
+INIT.fiume=()=>{gs={cats:shuffle(CATEGORIE).slice(0,2),i:0,res:[],phase:"ready"}};
+const fiumeTarget=()=>4+2*mlvl("fiume").lvl;
+function fiumeWords(t){const seen=new Set();return String(t||"").toLowerCase().replace(/[^a-zàèéìòù' ]/g," ").split(/\s+/).map(w=>w.replace(/^[a-z]'/,"")).filter(w=>w.length>=3&&!STOP.has(w)&&!seen.has(w)&&seen.add(w))}
+RENDER.fiume=()=>{const cat=gs.cats[gs.i],tg=fiumeTarget(),sub=`Livello ${mlvl("fiume").lvl} · prova ${gs.i+1} di 2 · obiettivo ${tg} parole`;
+  const v=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)&&(!!sample||!!SR);
+  if(gs.phase==="res"){const r=gs.res[gs.i];const best=(S.fiumeBest||0);
+    app.innerHTML=head(r.n>=tg?"Grande!":r.n>=tg/2?"Bene":"Si allena così",sub)+`<div class="card"><p><b>${r.n}</b> parole su ${tg}${r.n>=best&&r.n>0?" · tuo record!":""}</p>
+      ${r.words.length?`<div class="wchips">${r.words.map(w=>`<span>${esc(w)}</span>`).join("")}</div>`:""}
+      <p class="small muted">Trovare tante parole in fretta allena la strada per tirarle fuori quando parli con qualcuno.</p>
+      <button class="btn wide" id="nx">${gs.i>=1?"Fine":"Altra categoria"}</button></div>`;
+    app.querySelector("#nx").onclick=()=>{if(gs.i>=1){const ok=gs.res.filter(x=>x.n>=tg).length,half=gs.res.filter(x=>x.n>=tg/2).length;const rr=ok===2?2:half>=1?1:0;mAdapt("fiume",rr);finish(rr);return}gs.i++;gs.phase="ready";render()};return}
+  if(gs.phase==="self"){app.innerHTML=head("Quante ne hai dette?",sub)+`<div class="card"><p>Categoria: <b>${esc(cat)}</b></p><div class="two">${[3,6,10,15].map(n=>`<button class="btn soft" data-n="${n}">${n===15?"15 o più":"circa "+n}</button>`).join("")}</div></div>`;
+    app.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{const n=+b.dataset.n;gs.res[gs.i]={n,words:[]};S.fiumeBest=Math.max(S.fiumeBest||0,n);save();gs.phase="res";render()});return}
+  app.innerHTML=head("Fiume di parole",sub)+`<div class="card"><p class="eyebrow">Categoria</p><p class="big" style="font-size:26px">${esc(cat)}</p>
+    <p class="small muted">Hai 30 secondi. Dì ad alta voce più parole che puoi di questo tipo, una dopo l'altra. Se ti blocchi, va bene: pensa a un posto (la cucina, la piazza…) e guardati intorno con la testa.</p>
+    ${v?micHTML("recf","Via! Ti ascolto 30 secondi"):`<button class="btn wide" id="selfgo">Le dico senza microfono</button>`}</div>${boredBtn()}`;
+  const sg=app.querySelector("#selfgo");if(sg)sg.onclick=()=>{gs.phase="self";render()};
+  const rb=app.querySelector("#recf");if(rb)rb.onclick=()=>toggleRec(rb,async a=>{const my=gs;let words=null;
+    if(a.live&&!a.silent){words=fiumeWords(a.live);
+      if(sample&&words.length){prog("Controllo le parole…");try{const r=await sample.json(`Gioco: dire più parole possibili della categoria "${cat}". Ecco cosa ha detto il ragazzo (testo scritto dal telefono, può avere errori di riconoscimento): """${a.live}""". Elenca solo le parole che c'entrano con la categoria, senza ripetizioni; quelle in dialetto scrivile in italiano. Rispondi SOLO con JSON {"parole":["..."]}`,{modelTier:"quick"});
+        if(Array.isArray(r.parole))words=r.parole.map(x=>String(x).toLowerCase().trim()).filter(Boolean).slice(0,40)}catch(e){}}}
+    else if(sample){try{const r=await sample.json(`Un ragazzo ha 30 secondi per dire più parole possibili della categoria "${cat}". Ascolta l'audio allegato ed elenca le parole che ha detto che c'entrano con la categoria, senza ripetizioni, anche se dette in dialetto (in quel caso scrivile in italiano). Rispondi SOLO con JSON {"parole":["..."]}`,{audio:a});
+      words=(Array.isArray(r.parole)?r.parole:[]).map(x=>String(x).toLowerCase().trim()).filter(Boolean).slice(0,40)}catch(e){if(gs!==my)return;toast(errMsg(e))}}
+    if(gs!==my)return;
+    if(!words){gs.phase="self";render();return}
+    gs.res[gs.i]={n:words.length,words};S.fiumeBest=Math.max(S.fiumeBest||0,words.length);save();gs.phase="res";render()},30);
+};
+
 /* ---- Cosa manca? ---- */
 function mancaRound(){const L=mlvl("manca").lvl,n=Math.min(9,3+L);const words=shuffle(PAROLE).slice(0,n),miss=pick(words);
   const opts=shuffle([miss].concat(shuffle(PAROLE.filter(w=>!words.includes(w))).slice(0,1),shuffle(words.filter(w=>w!==miss)).slice(0,2)));
@@ -1674,6 +1848,18 @@ RENDER.minuto=()=>{
 /* ---- voce: microfono (registrazione WAV) e lettura ad alta voce ---- */
 const canMic=()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)&&!!(window.AudioContext||window.webkitAudioContext);
 const hasVoice=()=>!!sample&&!!GKEY&&canMic()&&AUDIO_OK;
+/* il telefono scrive le parole mentre parli (gratis, senza Google). Se Google è bloccato si usa questo testo */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const Live={r:null,base:"",cur:"",
+  start(){this.base="";this.cur="";if(!SR||S.live===false)return;
+    try{const r=new SR();r.lang="it-IT";r.continuous=true;r.interimResults=true;
+      r.onresult=e=>{let t="";for(let k=0;k<e.results.length;k++)t+=e.results[k][0].transcript+" ";this.cur=t.trim();liveShow()};
+      r.onerror=()=>{};
+      r.onend=()=>{if(this.r===r&&Rec.on){this.base=(this.base+" "+this.cur).trim();this.cur="";try{r.start()}catch(e){}}};
+      r.start();this.r=r}catch(e){this.r=null}},
+  stop(){const r=this.r;this.r=null;if(r)try{r.stop()}catch(e){}},
+  text(){return (this.base+" "+this.cur).replace(/\s+/g," ").trim()}};
+function liveShow(){const t=Live.text();document.querySelectorAll(".livetxt").forEach(p=>p.textContent=t)}
 const Rec={on:false,
   async start(){
     const AC=window.AudioContext||window.webkitAudioContext;this.ctx=new AC();try{await this.ctx.resume()}catch(e){}
@@ -1682,15 +1868,16 @@ const Rec={on:false,
     this.src=this.ctx.createMediaStreamSource(this.stream);this.proc=this.ctx.createScriptProcessor(4096,1,1);this.bufs=[];this.rate=this.ctx.sampleRate;
     this.proc.onaudioprocess=e=>{if(!this.on)return;const d=e.inputBuffer.getChannelData(0);this.bufs.push(new Float32Array(d));
       let q=0;for(let i=0;i<d.length;i+=4)q+=d[i]*d[i];const rms=Math.sqrt(q/(d.length/4));this.level=this.level?this.level*.6+rms*.4:rms};
-    this.src.connect(this.proc);this.proc.connect(this.ctx.destination);this.on=true;this.level=0;if(!meterOn)requestAnimationFrame(meterLoop);
+    this.src.connect(this.proc);this.proc.connect(this.ctx.destination);this.on=true;this.level=0;if(!meterOn)requestAnimationFrame(meterLoop);Live.start();
   },
   async stop(){
-    if(!this.ctx)return null;this.on=false;
+    if(!this.ctx)return null;this.on=false;Live.stop();
     try{this.src.disconnect();this.proc.disconnect()}catch(e){}
     try{this.stream.getTracks().forEach(t=>t.stop())}catch(e){}
     const ctx=this.ctx;this.ctx=null;try{await Promise.race([ctx.close(),new Promise(r=>setTimeout(r,800))])}catch(e){}
     const len=this.bufs.reduce((a,b)=>a+b.length,0),all=new Float32Array(len);let o=0;this.bufs.forEach(b=>{all.set(b,o);o+=b.length});this.bufs=[];
     const target=16000;let x=await resampleTo(all,this.rate,target);
+    let pk=0;for(let i=0;i<x.length;i+=4){const v=Math.abs(x[i]);if(v>pk)pk=v}
     x=cleanVoice(x,target);
     const n=x.length,pcm=new Int16Array(n);
     for(let i=0;i<n;i++)pcm[i]=Math.max(-1,Math.min(1,x[i]))*0x7fff;
@@ -1699,7 +1886,7 @@ const Rec={on:false,
     v.setUint32(24,target,true);v.setUint32(28,target*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,pcm.length*2,true);
     new Int16Array(buf,44).set(pcm);
     const bytes=new Uint8Array(buf);let bin="";for(let i=0;i<bytes.length;i+=0x8000)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));
-    return {mime:"audio/wav",data:btoa(bin),secs:n/target};
+    await sleep(250);return {mime:"audio/wav",data:btoa(bin),secs:n/target,live:Live.text(),silent:pk<0.004};
   }
 };
 /* ricampiona a 16 kHz con il filtro dell'iPhone (OfflineAudioContext); se non c'è, media mobile */
@@ -1740,6 +1927,7 @@ async function toggleRec(btn,onDone,maxS=60){
     let a=null;try{a=await Rec.stop()}catch(e){a=null}
     recBusy=false;
     if(a&&a.secs>=0.7){addStat("voice");save()}
+    if(a&&a.secs<0.7&&a.live&&a.live.split(' ').length>=2)a.secs=0.7;
     if(!a||a.secs<0.7){toast("Troppo corto: tocca, parla, poi tocca di nuovo.");render();return}
     progressCb=t=>{if(btn.isConnected)btn.innerHTML='<span class="spin"></span> '+esc(t)};prog("Il Cervello ascolta…");
     let done=false;const guard=setTimeout(()=>{if(!done){progressCb=null;toast("Google non ha risposto in tempo. Riprova.");render()}},200000);
@@ -1754,7 +1942,7 @@ async function toggleRec(btn,onDone,maxS=60){
   const cur=()=>(recBtnId&&document.getElementById(recBtnId))||btn;
   const upd=()=>{const b=cur(),s=Math.floor((Date.now()-t0)/1000);
     if(b!==btn){b.onclick=()=>toggleRec(b,recDone,recMax);btn=b}
-    b.classList.add("rec");if(!b.querySelector(".rt"))b.innerHTML=METER(5)+' <span class="rt"></span>';b.querySelector(".rt").textContent=`Ho finito · ${s}s`;if(s>=maxS)b.click()};
+    b.classList.add("rec");if(!b.querySelector(".rt"))b.innerHTML=METER(5)+' <span class="rt"></span>';if(SR&&S.live!==false&&!(b.nextElementSibling&&b.nextElementSibling.classList.contains("livetxt")))b.insertAdjacentHTML("afterend",'<p class="livetxt" aria-live="polite"></p>');b.querySelector(".rt").textContent=`Ho finito · ${s}s`;if(s>=maxS)b.click()};
   upd();recTimer=setInterval(upd,500);
 }
 function speak(t){if(!S.tts||!window.speechSynthesis||!t)return;
@@ -1786,7 +1974,7 @@ Rispondi SOLO con JSON {${audio?'"detto":"...","nota_voce":"...",':""}"battuta":
     if(audio){const d=String(r.detto||"").trim();
       if(!d){gs.err="Non ho sentito bene. Riprova parlando un po' più vicino al telefono.";gs.busy=false;render();return}
       gs.log.push({who:"io",t:d});if(r.nota_voce)gs.notes.push(String(r.nota_voce))}
-    gs.meglio=String(r.meglio||"");
+    gs.meglio=String(r.meglio||"");{const me=gs.log.filter(x=>x.who==="io").pop();if(gs.meglio&&me)noteErr(me.t,gs.meglio,"conversazione")}
     if(userTurns()>=5){gs.busy=false;return convEnd()}
     const b=String(r.battuta||"…");gs.log.push({who:"ai",t:b});gs.sug=(r.suggerimenti||[]).map(String).slice(0,2);gs.showSug=false;speak(b);
   }catch(e){if(gs!==my)return;gs.err=errMsg(e)}
@@ -2152,6 +2340,7 @@ function rCervello(){
   <p class="muted">Il Cervello ti ascolta e ragiona con l'intelligenza artificiale. Guarda come vai, crea esercizi sui tuoi interessi e ti aiuta a trovare il metodo giusto anche per studiare.</p>
   ${off?`<p class="note">Il Cervello non è ancora collegato: aggiungi la chiave Gemini in Impostazioni, qui sotto. Gli altri giochi funzionano lo stesso.</p>`:""}
   ${goalCervelloHTML()}
+  ${brainHTML()}
   ${voiceCardHTML(curStep()?curStep().scena:"una conversazione tra amici su cosa ho fatto oggi")}
   <div class="card"><h2>Cosa ti piace?</h2><p class="small muted">Più è preciso, più gli esercizi saranno tuoi.</p>
     <textarea id="int" maxlength="300" placeholder="es. Minecraft, video e montaggio, calcio, la festa del paese…">${esc(S.interessi)}</textarea>
