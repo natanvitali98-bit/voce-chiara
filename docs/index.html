@@ -660,11 +660,11 @@ const STORIE=[
 /* ================= STATO ================= */
 const KEY="voce-chiara-v1";
 const blank=()=>({v:2,updatedAt:0,xp:0,speak:{lvl:1,ups:0,log:[]},mem:{span:3,ok:0,best:3,mode:"parole",log:[]},games:[],dict:[],
-  extra:{frasi:[],indovina:[],spiega:[],missioni:[]},days:{},chunky:true,dialetto:"",interessi:"",energy:null,plan:null,mission:null,tip:null,chat:[],tts:true,precise:false,errs:[],brain:null});
+  extra:{frasi:[],indovina:[],spiega:[],missioni:[],racconti:[],storie:[],confuse:[]},days:{},chunky:true,dialetto:"",interessi:"",energy:null,plan:null,mission:null,tip:null,chat:[],tts:true,precise:false,errs:[],brain:null});
 function migrate(o){
   const s=Object.assign(blank(),o);
   if(Array.isArray(s.extra)) s.extra={frasi:s.extra,indovina:[],spiega:[],missioni:[]};
-  s.extra=Object.assign({frasi:[],indovina:[],spiega:[],missioni:[]},s.extra);
+  s.extra=Object.assign({frasi:[],indovina:[],spiega:[],missioni:[],racconti:[],storie:[],confuse:[]},s.extra);
   if(o&&o.tell&&o.tell.log&&!o.games) s.games=o.tell.log.map(x=>({d:x.d,g:"racconta",r:x.r}));
   s.dict.forEach(x=>{if(x.box==null){x.box=0;x.due=today()}});
   s.v=2; return s;
@@ -696,7 +696,7 @@ let GKEY="";try{GKEY=localStorage.getItem(KEYSTORE)||""}catch(e){}
 let sample=null,sampleChecked=false;
 const GEMINI="https://generativelanguage.googleapis.com/v1beta/models";
 const MODELS=["gemini-flash-latest","gemini-2.5-flash"];
-const APP_VERSION="v26";
+const APP_VERSION="v27";
 let AUDIO_OK=true;try{AUDIO_OK=localStorage.getItem("vc-noaudio")!=="1"}catch(e){}
 function setAudioOk(v){AUDIO_OK=v;try{v?localStorage.removeItem("vc-noaudio"):localStorage.setItem("vc-noaudio","1")}catch(e){}}
 let progressCb=null;const prog=t=>{if(progressCb)progressCb(t)};
@@ -1446,9 +1446,8 @@ INIT.leggi=()=>{
   const lvl=S.speak.lvl, pool=FRASI[lvl].map(chunks);
   const extra=S.extra.frasi.filter(x=>x.lvl===lvl).map(x=>x.pezzi);
   const mine=S.dict.filter(x=>x.kind!=="studio").map(x=>x.pezzi&&x.pezzi.length?x.pezzi:autoChunk(x.it));
-  const q=[],used=new Set();
-  for(let i=0;i<3;i++){let src=pool;if(mine.length&&i===1)src=mine;else if(extra.length&&i!==1)src=Math.random()<.5?extra:pool;
-    let c,t=0;do{c=pick(src);t++}while(used.has(c.join("|"))&&t<12);used.add(c.join("|"));q.push(c)}
+  const base=fresh("leggi"+lvl,pool.concat(extra),mine.length?2:3);
+  const q=mine.length?[base[0],fresh("mie",mine,1)[0],base[1]]:base;
   gs={q,i:0,c:S.chunky?0:99,rs:[]};
 };
 RENDER.leggi=()=>{
@@ -1482,7 +1481,7 @@ function rateLeggi(r){
 }
 
 /* ---- Racconta ---- */
-INIT.racconta=()=>{gs={item:pick(RACCONTI)}};
+INIT.racconta=()=>{gs={item:fresh("racconta",RACCONTI.concat(S.extra.racconti||[]),1)[0]}};
 RENDER.racconta=()=>{
   const v=hasVoice();
   app.innerHTML=head(esc(gs.item.t),v?"Raccontalo a voce: il Cervello ti ascolta e ti dice com'è andata.":"Dillo a voce alta, in italiano. Se una parola non arriva, usa una frase salvagente e vai avanti.")+`
@@ -1493,7 +1492,7 @@ RENDER.racconta=()=>{
   :`${v?micHTML("recr","Racconta: ti ascolto")+`<p class="small muted">Oppure, se l'hai detto senza registrare:</p>`:`<p class="small muted">Com'è andata?</p>`}
     ${rateHTML("Difficile","Così così","Bene")}<button class="btn soft" id="other">Altro argomento</button>`}</div>${boredBtn()}`;
   app.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>finish(+b.dataset.r));
-  const o=app.querySelector("#other");if(o)o.onclick=()=>{let n;do{n=pick(RACCONTI)}while(n===gs.item);gs.item=n;render()};
+  const o=app.querySelector("#other");if(o)o.onclick=()=>{let n;n=fresh("racconta",RACCONTI.concat(S.extra.racconti||[]),1)[0];gs.item=n;render()};
   const ct=app.querySelector("#cont");if(ct)ct.onclick=()=>finish(gs.fb.r);
   const rb=app.querySelector("#recr");if(rb)rb.onclick=()=>toggleRec(rb,async a=>{const my=gs;
     try{const r=await sample.json(`Sei un logopedista gentile. Un ragazzo di 18 anni con DSA (in dialetto gli viene più facile; in italiano, a voce, le parole gli si mischiano) racconta a voce questo argomento: "${gs.item.t}". Ascolta l'audio allegato.
@@ -1506,7 +1505,7 @@ Rispondi SOLO con JSON {"sentito":"trascrizione fedele","voto":2 se ha raccontat
 };
 
 /* ---- Spiega senza dire ---- */
-INIT.spiega=()=>{const pool=SPIEGA.concat(S.extra.spiega);gs={items:shuffle(pool).slice(0,2),i:0,t:45,phase:"ready",rs:[]}};
+INIT.spiega=()=>{const pool=SPIEGA.concat(S.extra.spiega);gs={items:fresh("spiega",pool,2),i:0,t:45,phase:"ready",rs:[]}};
 async function endSpiega(){
   const my=gs;if(!my)return;const it=gs.items[gs.i];
   if(!gs.rec){gs.phase="rate";render();return}
@@ -1548,7 +1547,7 @@ RENDER.spiega=()=>{
 };
 
 /* ---- Indovina la parola ---- */
-INIT.indovina=()=>{const pool=INDOVINA.concat(S.extra.indovina);gs={items:shuffle(pool).slice(0,3),i:0,shown:1,phase:"clues",pts:0,ok:0}};
+INIT.indovina=()=>{const pool=INDOVINA.concat(S.extra.indovina);gs={items:fresh("indovina",pool,3),i:0,shown:1,phase:"clues",pts:0,ok:0}};
 RENDER.indovina=()=>{
   const it=gs.items[gs.i];
   app.innerHTML=head("Indovina la parola",`Parola ${gs.i+1} di 3 · punti ${gs.pts}. Appena la sai, dilla ad alta voce in una frase: "È un…"`)+`
@@ -1564,7 +1563,7 @@ RENDER.indovina=()=>{
 };
 
 /* ---- Ragnatela (analisi delle caratteristiche) ---- */
-INIT.ragnatela=()=>{const pool=INDOVINA.concat(S.extra.indovina).map(x=>x.w);gs={w:pick(pool),step:0}};
+INIT.ragnatela=()=>{const pool=INDOVINA.concat(S.extra.indovina).map(x=>x.w);gs={w:fresh("ragnatela",[...new Set(pool)],1)[0],step:0}};
 RENDER.ragnatela=()=>{
   const last=gs.step>=RAGNATELA.length;
   app.innerHTML=head("Ragnatela","Rispondi a voce alta con frasi intere. Ogni filo che aggiungi rende la parola più facile da ritrovare quando parli.")+`
@@ -1683,7 +1682,7 @@ const CONFUSE=[
  {f:"Non ho capito ___ hai detto.",ok:"cosa",no:["che cosa che","quello cosa"]}];
 INIT.giusta=()=>{const L=mlvl("giusta").lvl,nopt=L>=3?3:2;
   const mine=((S.brain&&S.brain.parole)||[]).slice(0,2).map(p=>({f:"Come si dice in italiano? ___",ok:p.g,no:[p.s],mine:1}));
-  const items=shuffle(mine.concat(shuffle(CONFUSE).slice(0,5-mine.length))).map(x=>({...x,opts:shuffle([x.ok].concat(x.no.slice(0,nopt-1)))}));
+  const items=shuffle(mine.concat(fresh("giusta",CONFUSE.concat(S.extra.confuse||[]),5-mine.length))).map(x=>({...x,opts:shuffle([x.ok].concat(x.no.slice(0,nopt-1)))}));
   gs={items,i:0,score:0,pick:null}};
 RENDER.giusta=()=>{const it=gs.items[gs.i],L=mlvl("giusta").lvl,sub=`Livello ${L} · ${gs.i+1} di ${gs.items.length}${it.mine?" · dalle tue parole":""}`;
   const full=it.f.replace("___",it.ok);
@@ -1702,7 +1701,7 @@ RENDER.giusta=()=>{const it=gs.items[gs.i],L=mlvl("giusta").lvl,sub=`Livello ${L
 INIT.ordine=()=>{const L=mlvl("ordine").lvl,keys=Object.keys(FRASI).map(Number).sort((a,b)=>a-b);
   const lv=keys[Math.min(keys.length-1,L)]||keys[keys.length-1];
   const pool=FRASI[lv].map(chunks).filter(c=>c.length>=3);
-  gs={items:shuffle(pool.length?pool:FRASI[keys[keys.length-1]].map(chunks)).slice(0,3),i:0,placed:[],err:0,bad:null};gs.pool=shuffle(gs.items[0].map((_,k)=>k))};
+  gs={items:fresh("ordine"+lv,pool.length?pool:FRASI[keys[keys.length-1]].map(chunks),3),i:0,placed:[],err:0,bad:null};gs.pool=shuffle(gs.items[0].map((_,k)=>k))};
 RENDER.ordine=()=>{const it=gs.items[gs.i],L=mlvl("ordine").lvl,sub=`Livello ${L} · frase ${gs.i+1} di ${gs.items.length}`,done=gs.placed.length===it.length;
   app.innerHTML=head(done?"Ecco la frase":"Frase in ordine",sub+(done?"":". Tocca i pezzi nell'ordine giusto."))+`<div class="card${done?" good":""}">
     <div class="built">${gs.placed.map((k,j)=>j===gs.placed.length-1?`<span class="piece">${esc(it[k])}</span>`:esc(it[k])).join(" ")||'<span class="muted">…</span>'}</div>
@@ -1718,7 +1717,7 @@ RENDER.ordine=()=>{const it=gs.items[gs.i],L=mlvl("ordine").lvl,sub=`Livello ${L
 /* ---- Fiume di parole: allena a trovare le parole in fretta ---- */
 const CATEGORIE=["animali","cose che trovi in cucina","cibi e piatti","vestiti","mestieri","sport","cose verdi","cose che trovi in un bagno","oggetti della tua camera","cose che vedi in paese","cose che trovi a una sagra","mezzi di trasporto","parti del corpo","cose che si fanno in estate","verbi di movimento, come correre","cose che fanno rumore"];
 const STOP=new Set("e ed poi allora ehm eh ah cioè il lo la i gli le l un una uno di da in con su per tra fra che non mi ti si ci vi è ho ha sono anche ma o oppure boh tipo dunque quindi così poi altro ancora come cosa basta niente insomma ok va bene sì no del della dei delle al alla ai alle nel nella".split(" "));
-INIT.fiume=()=>{gs={cats:shuffle(CATEGORIE).slice(0,2),i:0,res:[],phase:"ready"}};
+INIT.fiume=()=>{gs={cats:fresh("fiume",CATEGORIE,2),i:0,res:[],phase:"ready"}};
 const fiumeTarget=()=>4+2*mlvl("fiume").lvl;
 function fiumeWords(t){const seen=new Set();return String(t||"").toLowerCase().replace(/[^a-zàèéìòù' ]/g," ").split(/\s+/).map(w=>w.replace(/^[a-z]'/,"")).filter(w=>w.length>=3&&!STOP.has(w)&&!seen.has(w)&&seen.add(w))}
 RENDER.fiume=()=>{if(gs.phase==="res"&&!gs.cel){gs.cel=1;const rr=gs.res[gs.i];if(rr&&rr.n>=fiumeTarget())setTimeout(()=>celebrate(false),200)}
@@ -1746,6 +1745,133 @@ RENDER.fiume=()=>{if(gs.phase==="res"&&!gs.cel){gs.cel=1;const rr=gs.res[gs.i];i
     if(!words){gs.phase="self";render();return}
     gs.res[gs.i]={n:words.length,words};S.fiumeBest=Math.max(S.fiumeBest||0,words.length);save();gs.phase="res";render()},30);
 };
+
+/* ---- più contenuti: così le domande si ripetono molto meno ---- */
+FRASI[1].push("Buongiorno, / un caffè, per favore.","Quanto costa / questo?","Dov'è / il bagno?","Mi dispiace, / sono in ritardo.","A che ora / apre?","Posso / pagare con la carta?","Ci sentiamo / stasera.","Ho fame, / mangiamo?","Che bella / giornata!","Vado / a casa.");
+FRASI[2].push("Domani mattina / devo alzarmi presto / per lavorare.","Mi puoi dire / dove si trova / la farmacia?","Sabato sera / andiamo alla festa / in piazza.","Ho perso il telefono / e non lo trovo / da nessuna parte.","Vorrei prenotare / un tavolo / per quattro persone.","Scusa il ritardo, / c'era traffico / sulla strada.","Ti va di venire / a prendere un gelato / con noi?","Il treno parte / alle otto / dal binario due.","Oggi non mi sento bene, / resto a casa / a riposare.","Mi piace molto / questa canzone, / la conosci?");
+FRASI[3].push("Se domani non piove, / potremmo andare / a fare un giro / in montagna.","Ho chiamato il meccanico / perché la macchina / fa un rumore strano / da qualche giorno.","Quando ero piccolo / passavo l'estate / a casa dei nonni / in campagna.","Prima di decidere / vorrei pensarci bene, / ti rispondo / domani.","Mi hanno detto / che il nuovo bar in piazza / fa una colazione / buonissima.","Non riesco a trovare / le parole giuste, / dammi un attimo / per pensarci.","Secondo me / la cosa più importante / è arrivare / preparati.","Ieri ho aiutato mio padre / a sistemare il giardino / e alla fine / eravamo stanchissimi.");
+FRASI[4].push("Anche se all'inizio / ero un po' nervoso, / il colloquio è andato bene / e mi hanno detto / che mi richiamano.","Ti spiego come funziona: / prima ti registri sul sito, / poi scegli l'orario / e alla fine / ricevi una conferma.","Quest'anno alla castagnata / abbiamo preparato / più di cento chili / di castagne / per tutti.","Mi piacerebbe imparare / a montare i video / perché così / potrei raccontare / quello che faccio.","Se non capisci qualcosa, / non vergognarti / di chiedere: / è il modo migliore / per imparare.","Ho deciso di allenarmi / un po' ogni giorno, / anche solo cinque minuti, / perché la costanza / conta più della fatica.");
+FRASI[5].push("Quando parlo davanti a tante persone / all'inizio sento il cuore che batte, / ma se respiro con calma / e parto da una frase semplice, / dopo un po' va meglio.","Vi propongo di organizzarci così: / io penso alla musica, / voi due vi occupate del cibo / e ci sentiamo venerdì / per controllare che sia tutto pronto.","La cosa che mi è piaciuta di più / di questa esperienza / è stata lavorare in gruppo, / perché ognuno ha portato / qualcosa di diverso.","Se dovessi spiegare a qualcuno / perché il mio paese è speciale, / partirei dalla vista / che si vede dalla piazza / al tramonto.");
+RACCONTI.push(
+ {t:"Racconta la tua giornata perfetta.",s:["Mi sveglio…","Nel pomeriggio…","La sera…"]},
+ {t:"Racconta un viaggio o una gita che ti è piaciuta.",s:["Siamo andati a…","La cosa più bella…","Tornando…"]},
+ {t:"Spiega come funziona un videogioco che conosci.",s:["Il gioco è…","Lo scopo è…","Il trucco è…"]},
+ {t:"Racconta com'è andata l'ultima festa del paese.",s:["Quest'anno…","C'era…","Alla fine…"]},
+ {t:"Descrivi il tuo amico di più vecchia data.",s:["Si chiama…","Ci conosciamo da…","Di lui mi piace…"]},
+ {t:"Racconta una volta in cui ti sei sentito fiero di te.",s:["Era il giorno in cui…","Ho fatto…","Mi sono sentito…"]},
+ {t:"Spiega a un turista come arrivare dal tuo paese al mare.",s:["Prima prendi…","Poi…","Dopo circa…"]},
+ {t:"Racconta cosa faresti con mille euro.",s:["Prima di tutto…","Poi…","Il resto…"]},
+ {t:"Descrivi il lavoro che ti piacerebbe fare.",s:["Mi piacerebbe…","Perché…","Per arrivarci…"]},
+ {t:"Racconta un film o una serie che hai visto.",s:["Parla di…","La parte migliore…","Te lo consiglio perché…"]},
+ {t:"Spiega come si fa una cosa che sai fare bene.",s:["Ti servono…","Il primo passo…","Attento a…"]},
+ {t:"Racconta una giornata andata storta.",s:["Quella mattina…","Poi è successo che…","Alla fine…"]},
+ {t:"Descrivi la tua stanza.",s:["Entrando…","Vicino alla finestra…","La cosa a cui tengo di più…"]},
+ {t:"Racconta cosa hai fatto lo scorso fine settimana.",s:["Sabato…","Domenica…","La cosa più bella…"]},
+ {t:"Spiega perché ti piace la tua stagione preferita.",s:["La mia stagione preferita è…","Mi piace perché…","Di solito…"]},
+ {t:"Racconta un ricordo di quando eri piccolo.",s:["Avevo circa…","Mi ricordo che…","Ancora oggi…"]},
+ {t:"Presentati come se fossi a un colloquio di lavoro.",s:["Mi chiamo…","So fare…","Vorrei lavorare qui perché…"]},
+ {t:"Racconta cosa ti piace del tuo paese e cosa cambieresti.",s:["Mi piace…","Non mi piace…","Io cambierei…"]},
+ {t:"Spiega le regole di uno sport.",s:["Si gioca in…","Per fare punto…","Non si può…"]},
+ {t:"Racconta il tuo piatto preferito e chi lo cucina meglio.",s:["Il mio piatto preferito…","Lo fa…","Il segreto è…"]},
+ {t:"Convinci un amico a venire con te a un evento.",s:["Sabato c'è…","Ci sarà…","Dai, vieni perché…"]},
+ {t:"Racconta una cosa che hai imparato di recente.",s:["Ho imparato…","All'inizio…","Adesso…"]});
+INDOVINA.push(
+ {w:"forchetta",c:["È un oggetto.","Si trova in cucina.","La usi quando mangi.","È di metallo e ha i denti.","Ci arrotoli gli spaghetti."]},
+ {w:"ascensore",c:["Si trova nei palazzi.","È una piccola stanza che si muove.","Ha dei pulsanti con i numeri.","Le porte si chiudono da sole.","Ti porta su e giù tra i piani."]},
+ {w:"aquilone",c:["È un gioco.","Si usa all'aperto.","Serve il vento.","Ha una lunga coda colorata.","Lo fai volare tenendo un filo."]},
+ {w:"biblioteca",c:["È un posto.","Bisogna stare in silenzio.","Ci sono tanti scaffali.","Puoi prendere in prestito qualcosa.","È piena di libri."]},
+ {w:"chitarra",c:["È uno strumento.","Si suona con le mani.","Di solito ha sei corde.","Si tiene appoggiata sulla gamba.","Si suona cantando attorno al fuoco."]},
+ {w:"orologio",c:["È un oggetto.","Spesso lo porti al polso.","Ha le lancette o i numeri.","Fa tic tac.","Ti dice che ore sono."]},
+ {w:"montagna",c:["È un posto in natura.","È molto alta.","D'inverno c'è la neve.","Ci si va a camminare o a sciare.","In cima c'è la vetta."]},
+ {w:"dentista",c:["È un mestiere.","Lavora in uno studio.","Usa piccoli attrezzi rumorosi.","Ti dice di aprire la bocca.","Ti cura i denti."]},
+ {w:"pioggia",c:["Viene dal cielo.","È bagnata.","Arriva con le nuvole grigie.","Ti serve l'ombrello.","Sono gocce d'acqua che cadono."]},
+ {w:"scopa",c:["È un oggetto di casa.","Ha un manico lungo.","In fondo ha tante setole.","Si usa insieme alla paletta.","Serve per pulire il pavimento."]},
+ {w:"cuscino",c:["È un oggetto morbido.","Sta sul letto.","Ha una federa.","Ci appoggi la testa.","Lo usi quando dormi."]},
+ {w:"semaforo",c:["Si trova per strada.","Ha delle luci.","Ha tre colori.","Il rosso vuol dire fermati.","Regola il traffico agli incroci."]},
+ {w:"trattore",c:["È un mezzo.","Si usa in campagna.","Le ruote dietro sono molto grandi.","Va piano e fa rumore.","Il contadino lo usa per arare il campo."]},
+ {w:"forno",c:["È un elettrodomestico.","Sta in cucina.","Dentro diventa molto caldo.","Ha uno sportello con il vetro.","Ci cuoci la pizza e le torte."]},
+ {w:"specchio",c:["È un oggetto.","Spesso è in bagno.","È di vetro.","Ti fa vedere la tua faccia.","Ci guardi quando ti pettini."]},
+ {w:"chiesa",c:["È un edificio.","Spesso ha un campanile.","La domenica c'è la messa.","Dentro ci sono le panche.","Ci si sposa e si battezzano i bambini."]},
+ {w:"lampadina",c:["È un oggetto piccolo.","È di vetro.","Si avvita.","Si accende con l'interruttore.","Fa luce nella stanza."]},
+ {w:"calendario",c:["È un oggetto.","Si appende al muro.","Ha dodici pagine.","Ci sono scritti i giorni.","Ci segni gli appuntamenti."]},
+ {w:"spiaggia",c:["È un posto.","Ci vai d'estate.","C'è la sabbia.","Ci sono ombrelloni e lettini.","È vicino al mare."]},
+ {w:"cuoco",c:["È un mestiere.","Lavora in un ristorante.","Porta un cappello bianco alto.","Usa pentole e coltelli.","Prepara da mangiare."]},
+ {w:"patente",c:["È un documento.","La puoi prendere a 18 anni.","Prima fai un esame di teoria e uno di guida.","C'è sopra la tua foto.","Ti serve per guidare la macchina."]},
+ {w:"compleanno",c:["È un giorno speciale.","Arriva una volta all'anno.","Ricevi regali e auguri.","C'è la torta con le candeline.","Festeggi gli anni che compi."]},
+ {w:"benzinaio",c:["È un posto.","Si trova lungo la strada.","Ci sono le pompe.","C'è un odore forte.","Ci fai il pieno alla macchina."]},
+ {w:"ape",c:["È un animale.","È piccola e vola.","È gialla e nera.","Può pungere.","Fa il miele."]},
+ {w:"tartaruga",c:["È un animale.","Può vivere moltissimi anni.","È lentissima.","Ha un guscio sulla schiena.","Può nascondere la testa nel guscio."]},
+ {w:"portafoglio",c:["È un oggetto.","Lo tieni in tasca o in borsa.","Si apre e si chiude.","Dentro ci sono le carte.","Ci metti i soldi."]},
+ {w:"sagra",c:["È un evento.","Si fa in paese.","Spesso d'estate o in autunno.","Ci sono stand con il cibo e la musica.","Festeggia un prodotto tipico, come la castagna."]},
+ {w:"cappotto",c:["È un vestito.","Si mette sopra gli altri vestiti.","Ha le maniche lunghe e i bottoni.","Lo usi quando fa freddo.","Lo appendi all'attaccapanni quando entri."]});
+SPIEGA.push({w:"ristorante",no:["mangiare","cameriere"]},{w:"gelato",no:["freddo","cono"]},{w:"partita",no:["squadra","giocare"]},{w:"ospedale",no:["medico","malato"]},{w:"cane",no:["abbaia","animale"]},
+ {w:"macchina",no:["guidare","ruote"]},{w:"cinema",no:["film","schermo"]},{w:"lavoro",no:["soldi","ufficio"]},{w:"pioggia",no:["acqua","ombrello"]},{w:"amico",no:["amicizia","persona"]},
+ {w:"vacanza",no:["viaggio","estate"]},{w:"musica",no:["canzone","ascoltare"]},{w:"letto",no:["dormire","cuscino"]},{w:"supermercato",no:["spesa","comprare"]},{w:"bicicletta",no:["pedali","ruote"]},
+ {w:"cucina",no:["cucinare","pentole"]},{w:"caffè",no:["bere","tazza"]},{w:"orologio",no:["ore","tempo"]},{w:"sveglia",no:["mattina","suona"]},{w:"banca",no:["soldi","conto"]},
+ {w:"piazza",no:["paese","centro"]},{w:"meccanico",no:["macchina","aggiustare"]},{w:"Natale",no:["regali","albero"]},{w:"frigorifero",no:["freddo","cucina"]},{w:"dentista",no:["denti","dottore"]},
+ {w:"matrimonio",no:["sposi","chiesa"]},{w:"tramonto",no:["sole","sera"]},{w:"barbiere",no:["capelli","tagliare"]},{w:"fuoco",no:["caldo","fiamme"]},{w:"castagna",no:["autunno","riccio"]});
+STORIE.push(
+ {t:"Sabato Giulia ha festeggiato il compleanno in pizzeria. Erano in dodici. A fine serata è arrivata una torta al cioccolato con diciannove candeline.",q:[["Dove ha festeggiato Giulia?",["in pizzeria","a casa","al bar"]],["Quanti erano?",["dodici","venti","sei"]],["Com'era la torta?",["al cioccolato","alla frutta","alla crema"]]]},
+ {t:"Luca doveva prendere il treno delle sette per Ancona. Si è svegliato tardi e l'ha perso. Ha preso quello delle otto e ha mandato un messaggio al capo per avvisarlo.",q:[["Dove andava il treno?",["ad Ancona","a Roma","a Pesaro"]],["Perché l'ha perso?",["si è svegliato tardi","c'era sciopero","ha sbagliato binario"]],["Chi ha avvisato?",["il capo","la mamma","un amico"]]]},
+ {t:"Al mercato del giovedì la signora Anna ha comprato due chili di mele, un formaggio e un mazzo di fiori gialli per la nipote. Ha speso quindici euro.",q:[["Che giorno c'è il mercato?",["giovedì","sabato","lunedì"]],["Per chi erano i fiori?",["per la nipote","per la figlia","per la vicina"]],["Quanto ha speso?",["quindici euro","dieci euro","venti euro"]]]},
+ {t:"Domenica pioveva, così Paolo e suo fratello sono rimasti a casa. La mattina hanno giocato alla playstation e il pomeriggio hanno aiutato il papà a sistemare la cantina.",q:[["Che tempo faceva?",["pioveva","c'era il sole","nevicava"]],["Cosa hanno fatto la mattina?",["hanno giocato alla playstation","sono andati al cinema","hanno studiato"]],["Cosa hanno sistemato?",["la cantina","il garage","la cucina"]]]},
+ {t:"Alla castagnata in piazza c'era tantissima gente. Sara serviva le castagne allo stand, mentre Marco vendeva i biglietti della lotteria. Il primo premio era una bicicletta rossa.",q:[["Cosa faceva Sara?",["serviva le castagne","vendeva i biglietti","suonava"]],["Cosa vendeva Marco?",["i biglietti della lotteria","le bibite","le magliette"]],["Qual era il primo premio?",["una bicicletta rossa","una televisione","un cesto di salumi"]]]},
+ {t:"Matteo ha un colloquio martedì alle dieci in un'officina di Fermo. Per prepararsi ha scritto su un foglio tre cose da dire su di sé e le ha ripetute ad alta voce la sera prima.",q:[["Quando è il colloquio?",["martedì alle dieci","lunedì alle nove","venerdì alle undici"]],["Dove?",["in un'officina","in un negozio","in un ristorante"]],["Come si è preparato?",["ha ripetuto ad alta voce tre cose","ha guardato un video","ha chiesto al padre"]]]});
+CONFUSE.push(
+ {f:"Domani ___ al cinema con i miei amici.",ok:"vado",no:["vaco","va"]},
+ {f:"Ieri ___ visto un bel film.",ok:"abbiamo",no:["avemo","abbiano"]},
+ {f:"Se fossi in te, ___ di più.",ok:"studierei",no:["studiassi","studiavo"]},
+ {f:"Penso che lui ___ ragione.",ok:"abbia",no:["ha","avrebbe"]},
+ {f:"Al professore ___ hai detto la verità?",ok:"gli",no:["ci","li"]},
+ {f:"Dammi ___ libro, per favore.",ok:"quel",no:["quello","quell'"]},
+ {f:"Ho visto ___ amici di Luca.",ok:"gli",no:["i","li"]},
+ {f:"Questa è la ragazza ___ ti ho parlato.",ok:"di cui",no:["che","che gli"]},
+ {f:"Stasera ___ a mangiare la pizza?",ok:"andiamo",no:["annamo","andamo"]},
+ {f:"Vorrei che tu ___ con me.",ok:"venissi",no:["vieni","verrai"]},
+ {f:"Ci ___ voluta un'ora per arrivare.",ok:"è",no:["ha","sono"]},
+ {f:"Siamo ___ alla festa tutti insieme.",ok:"andati",no:["andato","annati"]},
+ {f:"Se piove, ___ a casa.",ok:"restiamo",no:["restassimo","restavamo"]},
+ {f:"Sai ___ ore sono?",ok:"che",no:["quante","cosa"]});
+CATEGORIE.push("cose che compri in farmacia","strumenti musicali","colori","frutti","attrezzi da officina","lavori di casa","cose che fai la mattina","emozioni","cose che servono per una festa","oggetti elettronici","città italiane","cose che trovi in un bosco","cose da fare con un amico","cose da mettere in valigia");
+
+/* ---- niente domande ripetute: prima quelle che non hai ancora visto ---- */
+function fresh(g,pool,n,key){key=key||(x=>typeof x==="string"?x:Array.isArray(x)?x.join("|"):(x.w||x.t||x.f||JSON.stringify(x)).slice(0,90));
+  pool=pool.filter((x,i,a)=>a.findIndex(y=>key(y)===key(x))===i);
+  S.seen=S.seen||{};if(!S.seen[g])S.seen[g]=[];
+  let seen=S.seen[g],un=pool.filter(x=>!seen.includes(key(x)));
+  if(un.length<n){S.seen[g]=seen.slice(-Math.floor(pool.length/2));seen=S.seen[g];un=pool.filter(x=>!seen.includes(key(x)));if(un.length<n)un=pool}
+  const out=shuffle(un).slice(0,n);out.forEach(x=>S.seen[g].push(key(x)));cap(S.seen[g],300);
+  if(un.length-n<4)refillSoon(g);save();return out}
+/* quando un gioco ha poche domande nuove, il Cervello ne scrive altre su misura per te */
+const REFILL={leggi:"frasi",racconta:"racconti",spiega:"spiega",indovina:"indovina",ragnatela:"indovina",storia:"storie",giusta:"confuse"};
+let refillBusy=false;
+function refillSoon(g){const t=REFILL[String(g).replace(/\d+$/,"")];if(!t||!sample)return;S.refill=S.refill||{};if(S.refill[t]===today())return;S.refill[t]=today();setTimeout(()=>refill(t).catch(()=>{}),4000)}
+async function refill(t){
+  if(!sample)return 0;if(refillBusy){setTimeout(()=>refill(t).catch(()=>{}),15000);return 0}refillBusy=true;
+  try{const E=S.extra;E[t]=E[t]||[];
+    const len={1:"4-6 parole",2:"7-10 parole",3:"11-15 parole",4:"15-20 parole",5:"20-26 parole"}[S.speak.lvl];
+    const had={frasi:FRASI[S.speak.lvl].concat(E.frasi.map(x=>x.pezzi.join(" "))),racconti:RACCONTI.concat(E.racconti).map(x=>x.t),spiega:SPIEGA.concat(E.spiega).map(x=>x.w),indovina:INDOVINA.concat(E.indovina).map(x=>x.w),storie:[],confuse:CONFUSE.concat(E.confuse).map(x=>x.f)}[t].slice(-40).join(" | ");
+    const ask={frasi:`5 frasi nuove da leggere a voce alta, ${len} ciascuna, divise in pezzi da 2-5 parole secondo le pause del respiro. JSON {"frasi":[{"pezzi":["..."]}]}`,
+      racconti:`5 argomenti nuovi da raccontare a voce per 1 minuto (richieste brevi, concrete, legate ai suoi interessi e alla vita vera), ognuno con 3 inizi di frase che fanno da traccia. JSON {"racconti":[{"t":"...","s":["...","...","..."]}]}`,
+      spiega:`6 parole comuni nuove da spiegare a voce senza dirle, ognuna con 2 parole vietate ovvie. JSON {"spiega":[{"w":"...","no":["...","..."]}]}`,
+      indovina:`5 parole comuni nuove (una parola sola, minuscola), ognuna con 5 indizi brevi dal più vago al più preciso, che non contengono mai la parola. JSON {"indovina":[{"w":"...","c":["...","...","...","...","..."]}]}`,
+      storie:`2 storie brevi nuove (3 frasi, con nomi, numeri, luoghi e orari concreti; vita di tutti i giorni in un paese delle Marche o legate ai suoi interessi), ognuna con 3 domande su chi, dove, quando o quanto. Ogni domanda ha 3 risposte brevi: la PRIMA è quella giusta, le altre sbagliate ma credibili. JSON {"storie":[{"t":"...","q":[["domanda",["giusta","sbagliata","sbagliata"]]]}]}`,
+      confuse:`6 frasi nuove con un buco "___" per allenare errori tipici dell'italiano parlato (verbi, pronomi, apostrofi, congiuntivo, e forme dialettali marchigiane). Se sopra ci sono parole che sbaglia, usale. Per ogni frase: la parola giusta e 2 sbagliate ma credibili. JSON {"confuse":[{"f":"...___...","ok":"...","no":["...","..."]}]}`}[t];
+    const r=await sample.json(`Sei un logopedista creativo. ${ctx()}
+Crea in italiano parlato, corretto e naturale: ${ask}
+Non ripetere questi, che ha già visto: ${had||"-"}
+Rispondi SOLO con il JSON.`,{modelTier:"default"});
+    const L=Array.isArray(r[t])?r[t]:[];let n=0;const S_=x=>String(x||"").trim();
+    L.forEach(x=>{if(!x)return;
+      if(t==="frasi"&&Array.isArray(x.pezzi)&&x.pezzi.length>=2){E.frasi.push({lvl:S.speak.lvl,pezzi:x.pezzi.map(S_).filter(Boolean)});n++}
+      else if(t==="racconti"&&x.t&&Array.isArray(x.s)&&x.s.length>=2){E.racconti.push({t:S_(x.t).slice(0,140),s:x.s.map(S_).slice(0,3)});n++}
+      else if(t==="spiega"&&x.w&&Array.isArray(x.no)){E.spiega.push({w:S_(x.w),no:x.no.map(S_).slice(0,2)});n++}
+      else if(t==="indovina"&&x.w&&Array.isArray(x.c)&&x.c.length>=3&&!x.c.some(c=>String(c).toLowerCase().includes(String(x.w).toLowerCase()))){E.indovina.push({w:S_(x.w).toLowerCase(),c:x.c.map(S_).slice(0,5)});n++}
+      else if(t==="storie"&&x.t&&Array.isArray(x.q)&&x.q.length>=2&&x.q.every(q=>Array.isArray(q)&&q[0]&&Array.isArray(q[1])&&q[1].length>=2)){E.storie.push({t:S_(x.t),q:x.q.slice(0,3).map(q=>[S_(q[0]),q[1].slice(0,3).map(S_)])});n++}
+      else if(t==="confuse"&&x.f&&String(x.f).includes("___")&&x.ok&&Array.isArray(x.no)&&x.no.length>=1&&!x.no.includes(x.ok)){E.confuse.push({f:S_(x.f),ok:S_(x.ok),no:x.no.map(S_).slice(0,2)});n++}});
+    cap(E[t],80);save();return n;
+  }finally{refillBusy=false}
+}
 
 /* ---- Cosa manca? ---- */
 function mancaRound(){const L=mlvl("manca").lvl,n=Math.min(9,3+L);const words=shuffle(PAROLE).slice(0,n),miss=pick(words);
@@ -1792,7 +1918,7 @@ RENDER.dove=()=>{
 
 /* ---- Ricorda la storia ---- */
 INIT.storia=()=>{const L=mlvl("storia").lvl;const pool=STORIE.concat((S.extra.storie||[]));
-  const st=pick(pool);gs={st,phase:"read",i:0,ok:0,qs:st.q.map(q=>({q:q[0],a:q[1][0],opts:shuffle(q[1])})),lvl:L,busy:false}};
+  const st=fresh("storia",pool,1,x=>x.t.slice(0,70))[0];gs={st,phase:"read",i:0,ok:0,qs:st.q.map(q=>({q:q[0],a:q[1][0],opts:shuffle(q[1])})),lvl:L,busy:false}};
 RENDER.storia=()=>{
   if(gs.phase==="read"){app.innerHTML=head("Ricorda la storia","Leggila a voce alta, piano. Poi si nasconde e arrivano 3 domande.")+`
     <div class="card"><p class="storytext">${esc(gs.st.t)}</p><button class="btn wide" id="go">L'ho letta: nascondi</button>
@@ -1840,8 +1966,8 @@ INIT.minuto=()=>{
   const due=dueCards(), kinds=["frase","indovina"].concat(due.length?["ripasso","ripasso"]:[]);
   const k=pick(kinds);
   if(k==="ripasso")gs={k,c:pick(due),rev:false};
-  else if(k==="indovina")gs={k,it:pick(INDOVINA.concat(S.extra.indovina)),shown:1,rev:false};
-  else{const pool=FRASI[S.speak.lvl].map(chunks).concat(S.extra.frasi.filter(x=>x.lvl===S.speak.lvl).map(x=>x.pezzi));gs={k,p:pick(pool)}}
+  else if(k==="indovina")gs={k,it:fresh("indovina",INDOVINA.concat(S.extra.indovina),1)[0],shown:1,rev:false};
+  else{const pool=FRASI[S.speak.lvl].map(chunks).concat(S.extra.frasi.filter(x=>x.lvl===S.speak.lvl).map(x=>x.pezzi));gs={k,p:fresh("leggi"+S.speak.lvl,pool,1)[0]}}
 };
 RENDER.minuto=()=>{
   const top=`<div class="playbar"><div class="row"><span class="eyebrow">1 minuto</span><button class="btn ghost sm" id="quit">Esci</button></div></div>`;
